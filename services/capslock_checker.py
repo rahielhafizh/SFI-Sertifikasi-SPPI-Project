@@ -9,13 +9,13 @@ from services.config import load_config, wait_timer, logger
 class KeyboardController:
     VK_CAPITAL = 0x14
 
-    def is_capslock_on(self) -> bool:
+    def capslock_status(self) -> bool:
         if sys.platform.startswith("win"):
             return bool(ctypes.windll.user32.GetKeyState(self.VK_CAPITAL) & 0x0001)
         logger.warning("[KEYBOARD] CAPSLOCK CANNOT BE READ")
         return False
 
-    def toggle_capslock(self):
+    def press_capslock(self):
         pyautogui.press("capslock")
 
 
@@ -29,18 +29,18 @@ class CapsLockEnforcer:
 
     # CHECK IF CAPSLOCK IS ALREADY OFF
     def ensure_capslock_off(self) -> bool:
-        if not self.controller.is_capslock_on():
+        if not self.controller.capslock_status():
             logger.info("[KEYBOARD] CAPSLOCK IS ALREADY OFF")
             return True
 
         # ATTEMPT TO TURN CAPSLOCK OFF
         logger.warning("[KEYBOARD] ATTEMPTING TO DISABLE")
-        self.controller.toggle_capslock()
+        self.controller.press_capslock()
 
         # VERIFY CAPSLOCK STATE WITH RETRIES
         for attempt in range(1, self.max_retries + 1):
             time.sleep(self.retry_delay)
-            if not self.controller.is_capslock_on():
+            if not self.controller.capslock_status():
                 logger.info(f"[KEYBOARD] CAPSLOCK DISABLED ON ATTEMPT {attempt}")
                 return True
 
