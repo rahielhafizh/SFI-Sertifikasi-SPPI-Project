@@ -6,7 +6,6 @@ from general_task import *
 CONFIG = load_config()
 
 
-# FUNCTION TO CHECKING DATA IN FLOWRATE
 def excel_config():
     os.startfile(CONFIG["WORKSOURCE_FLOWRATE"])
     wait_timer(CONFIG["WAIT_TIME"]["THIRTY_SECOND"])

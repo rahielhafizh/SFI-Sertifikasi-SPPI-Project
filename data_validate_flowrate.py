@@ -95,8 +95,6 @@ class FlowrateDateValidator:
             "PERSONAL_FIVE",
         ]
         fallback_keys = ["ADMIN_PRIMARY"]
-
-        # Get recipients from CONTACT_INFO structure
         contact_info = self.CONFIG.get("CONTACT_INFO", {})
         recipients: List[str] = [
             contact_info.get(k)
@@ -111,9 +109,7 @@ class FlowrateDateValidator:
                 if k in contact_info and contact_info.get(k)
             ]
 
-        # Filter out None values
         recipients = [r for r in recipients if r]
-
         return recipients
 
     def load_flowrate_sheet(self, file_path: str) -> pd.DataFrame:
@@ -287,7 +283,6 @@ class FlowrateDateValidator:
 
         recipients = self.get_notification_recipients()
 
-        # For group messaging, we don't need individual recipients unless as fallback
         group_link = CONFIG["ASSET_GROUP"]
         if not group_link and not recipients:
             logger.error("[ERROR] NO NOTIFICATION RECIPIENTS OR GROUP FOUND")

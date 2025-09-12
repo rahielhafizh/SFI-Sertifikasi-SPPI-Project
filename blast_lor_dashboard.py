@@ -50,8 +50,8 @@ def excel_config():
     confirm()
     wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
-    set_new_book_name()
     # DATE IS SET TO YESTERDAY TO AVOID INCOMPLETE DATA
+    set_new_book_name()
     yesterday = datetime.now() - timedelta(days=1)
     lor_day = yesterday.strftime("%d")
     lor_year = yesterday.strftime("%Y")

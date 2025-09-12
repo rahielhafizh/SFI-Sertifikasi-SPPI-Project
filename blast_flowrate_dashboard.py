@@ -32,7 +32,6 @@ def excel_config():
     refresh_excel_data()
     wait_timer(CONFIG["WAIT_TIME"]["THREE_MINUTE"])
 
-    # NAVIGATE TO DASHBOARD SUMMARY SHEET
     pyautogui.hotkey("ctrl", "pagedown")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     switch_to_first_sheet()
@@ -46,14 +45,12 @@ def excel_config():
     move_or_copy_as_newbook()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
 
-    # CONFIGURE NEW WORKBOOK
     break_excel_link()
     switch_to_first_cells()
     switch_to_table_cells()
     capture_table_as_picture()
     switch_to_first_cells()
 
-    # SAVE WITH TIMESTAMPED FILENAME
     save_new_book()
     pyautogui.write(CONFIG["SUBMISSION_FLOWRATE"])
     confirm()
@@ -69,7 +66,6 @@ def excel_config():
     close_no_save()
     wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
 
-    # RETURN TO SOURCE FILE AND CLEANUP
     switch_to_first_sheet()
     for _ in range(2):
         pyautogui.hotkey("ctrl", "pagedown")
