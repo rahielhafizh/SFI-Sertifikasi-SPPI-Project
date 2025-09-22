@@ -10,7 +10,6 @@ from services.config import load_config, wait_timer, logger
 from outlook_stopsell import send_outlook_email
 from services.capslock_checker import capslock_checking
 from services.remover_stopsell import clear_submission_folder
-from data_validate_stopsell_mail import validate_stopsell_file
 from services.duration_counter import start_counter, stop_counter, get_duration_result
 from screen_keeper import (
     find_screen_keeper_process,
