@@ -11,7 +11,6 @@ _template_cache = None
 _template_scales = [0.8, 0.9, 1.0, 1.1, 1.2]
 
 
-# STANDARDISE PHONE NUMBER FORMAT
 def number_formatter(phone_no: str) -> str:
     if not phone_no or phone_no == "0":
         return None
@@ -29,7 +28,6 @@ def number_formatter(phone_no: str) -> str:
     return phone_no
 
 
-# VALIDATE WHATSAPP GROUP LINKS
 def validate_group_link(group_link: str) -> str:
     if not group_link:
         return None

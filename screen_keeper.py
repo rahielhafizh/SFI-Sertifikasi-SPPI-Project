@@ -20,18 +20,11 @@ CM_TO_PIXELS = 37.8
 # STATE MANAGER FOR SCREEN KEEPER
 class ScreenKeeperState:
     def __init__(self) -> None:
-        # STORE THE TIMESTAMPS OF RECENT RIGHT CLICKS TO ALLOW MANUAL STOP
         self.click_times: Deque[float] = deque(maxlen=3)
-
-        # FLAG TO INSTRUCT THE RUN LOOP TO STOP
         self.stop_flag: bool = False
-
-        # TIMERS FOR KEYPRESS PATTERN AND PATTERN SWITCHING
         self.last_keypress_time: float = time.time()
         self.last_pattern_switch: float = time.time()
         self.idle_check_time: float = time.time()
-
-        # RANDOMISED INTERVALS TO MAKE ACTIVITY LESS PREDICTABLE
         self.keypress_interval: float = random.uniform(3, 5)
         self.pattern_switch_interval: float = random.uniform(20, 40)
 
@@ -73,15 +66,6 @@ class ScreenKeeperState:
             return True
         return False
 
-    # CHECK NIGHT WINDOW ONCE EVERY 30 SECONDS
-    def should_simulate_night_activity(self) -> bool:
-        now = time.time()
-        if now - self.idle_check_time >= 30:
-            self.idle_check_time = now
-            hour = datetime.now().hour
-            return hour <= 6 or hour >= 22
-        return False
-
 
 # PATTERN MANAGER HANDLES MOVEMENT SHAPES
 class PatternManager:
@@ -102,7 +86,6 @@ class PatternManager:
         choices = [p for p in self.patterns if p is not self.current]
         self.current = random.choice(choices) if choices else self.current
 
-    # CIRCLE WITH SLIGHT RANDOM RADIUS PERTURBATION
     def circle(
         self, cx: float, cy: float, angle: float, r: float
     ) -> tuple[float, float]:
@@ -110,7 +93,6 @@ class PatternManager:
         y = cy + r * random.uniform(0.9, 1.1) * math.sin(angle)
         return x, y
 
-    # FIGURE-8 USING DOUBLE-FREQUENCY ON Y
     def figure8(
         self, cx: float, cy: float, angle: float, r: float
     ) -> tuple[float, float]:
@@ -118,7 +100,6 @@ class PatternManager:
         y = cy + (r / 2) * math.sin(2 * angle)
         return x, y
 
-    # ZIGZAG ALONG X WITH PROGRESS-DEPENDENT Y
     def zigzag(
         self, cx: float, cy: float, angle: float, r: float
     ) -> tuple[float, float]:
@@ -129,7 +110,6 @@ class PatternManager:
         return x, y
 
 
-# ACTIVITY SIMULATOR: ABSTRACTS KEYBOARD/INPUT ACTIONS
 class ActivitySimulator:
     # LAZY-IMPORT KEYBOARD MODULE OR USE PROVIDED MOCK
     def __init__(self, keyboard_module=None) -> None:
@@ -137,7 +117,6 @@ class ActivitySimulator:
 
     # PRESS A SINGLE ARROW KEY TO GENERATE ACTIVITY
     def simulate(self) -> None:
-        # PRESS AND RELEASE TO AVOID HOLDING KEYS
         try:
             action = random.choice(["left", "right", "up", "down"])
             self.keyboard.press_and_release(action)
@@ -152,7 +131,6 @@ class ActivitySimulator:
             logger.info("[SCREEN] NIGHT ACTIVITY TRIGGERED")
 
 
-# MAIN SERVICE IMPLEMENTATION
 class ScreenKeeperService:
     # DEPENDENCY INJECTION ALLOWS TESTING OR MOCKING
     def __init__(self, activity_simulator: Optional[ActivitySimulator] = None) -> None:
@@ -176,23 +154,19 @@ class ScreenKeeperService:
     def run_pattern_loop(
         self, diameter_cm: float, movement_time: float, sleep_time: float
     ) -> None:
-        # ENABLE FAILSAFE SO MOVEMENT CAN BE INTERRUPTED BY USER
         pyautogui = __import__("pyautogui")
         pyautogui.FAILSAFE = True
 
-        # CALCULATE RADIUS IN PIXELS FROM CENTIMETRES
         radius_px = (diameter_cm * CM_TO_PIXELS) / 2
         screen_width, screen_height = pyautogui.size()
         centre_x, centre_y = screen_width / 2, screen_height / 2
         angle = random.uniform(0, 2 * math.pi)
         direction = 1
 
-        # START BACKGROUND MOUSE LISTENER TO CATCH RIGHT CLICKS
         listener = mouse.Listener(on_click=self._on_click)
         listener.start()
         logger.info("[SCREEN] SCREEN KEEPER STARTED")
         logger.warning("[SCREEN] PRESS RIGHT-CLICK 3 TIMES QUICKLY TO STOP")
-
         try:
             while not self.state.stop_flag:
                 pattern_fn = self.pattern_manager.get_current_pattern()
@@ -204,7 +178,6 @@ class ScreenKeeperService:
                 except Exception as e:
                     logger.warning(f"[SCREEN] MOVE FAILED: {e}")
 
-                # ADAPTIVE SLEEP CONSERVES CPU
                 time.sleep(self.state.get_adaptive_sleep(sleep_time))
                 angle += 0.05 * direction
 
@@ -215,9 +188,6 @@ class ScreenKeeperService:
 
                 if self.state.should_simulate_activity():
                     self.activity_simulator.simulate()
-
-                if self.state.should_simulate_night_activity():
-                    self.activity_simulator.simulate_night()
 
         except KeyboardInterrupt:
             logger.info("[SCREEN] INTERRUPTED BY KEYBOARD")
@@ -311,7 +281,6 @@ class ScreenKeeperService:
         return False
 
 
-# SINGLETON-LIKE SERVICE INSTANCE FOR EXPORTED API
 _service_instance = ScreenKeeperService()
 
 
@@ -348,7 +317,6 @@ def main() -> None:
     if args.stop:
         sys.exit(0 if stop_screen_keeper() else 1)
 
-    # RUN NON-BACKGROUND MODE TO AVOID DOUBLE SPAWN
     if args.background:
         run_screen_keeper(
             args.diameter, args.movement_time, args.sleep_time, background=False

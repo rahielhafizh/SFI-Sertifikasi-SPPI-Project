@@ -3,7 +3,7 @@ import time
 import keyboard
 import pyautogui
 import win32com.client
-from datetime import datetime
+from datetime import datetime, timedelta
 from general_task import *
 from pynput.keyboard import Key, Controller
 from services.config import load_config, wait_timer, logger
@@ -22,7 +22,7 @@ keyboard = Controller()
 
 
 def get_current_date_info():
-    current_date = datetime.now()
+    current_date = datetime.now() - timedelta(days=1)
     english_month = current_date.strftime("%B")
     month_name_id = CONFIG["MONTHS_ID"].get(english_month, english_month)
     year = current_date.year
@@ -45,15 +45,11 @@ def excel_config():
     refresh_excel_data()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
 
-    pyautogui.hotkey("ctrl", "pagedown")
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-    select_sheet_down()
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
+    switch_to_right_sheet()
+    select_sheet_order_in()
     move_or_copy_menu()
     move_or_copy_as_newbook()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWENTY_SECOND"])
 
     break_excel_link()
     switch_to_first_sheet()
@@ -69,7 +65,6 @@ def excel_config():
     wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
     set_new_book_name()
-
     stopsell_filename = (
         f"Report Penugasan dan Kunjungan Cabang Stop Sell As of {filename_text}"
     )
@@ -79,20 +74,14 @@ def excel_config():
     wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
 
     close_no_save()
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWENTY_SECOND"])
 
     switch_to_first_sheet()
-    for _ in range(2):
-        pyautogui.hotkey("ctrl", "pagedown")
-
+    switch_to_right_sheet()
     switch_to_first_cells()
     close_with_save()
 
-    created_file_path = os.path.join(
-        CONFIG["SUBMISSION_STOPSELL"], f"{stopsell_filename}.xlsx"
-    )
-
-    return created_file_path, stopsell_filename, subject_text
+    return stopsell_filename, subject_text
 
 
 def send_email(subject_text):
@@ -148,11 +137,10 @@ if __name__ == "__main__":
     stop_screen_keeper()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
 
-    created_file_path, filename, subject_text = excel_config()
+    excel_config()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
 
     logger.info(f"[SYSTEM] EXCEL FILE CREATED: {filename}")
-    logger.info(f"[SYSTEM] FILE PATH: {created_file_path}")
 
     send_email(subject_text)
     logger.info("[SYSTEM] AUTOMATION PROCESS COMPLETED SUCCESSFULLY")

@@ -9,11 +9,9 @@ import pyautogui
 _pyautogui_configured = False
 
 
-# LOGGING CONFIGURATION MODULE
 def setup_logger() -> logging.Logger:
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    # PREVENT DUPLICATE HANDLER CREATION
     if not logger.handlers:
         formatter = ColoredFormatter(
             fmt=(
@@ -36,13 +34,11 @@ def setup_logger() -> logging.Logger:
             },
         )
 
-        # CREATE AND CONFIGURE STREAM HANDLER
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
 
-    # SUPPRESS HTTPS CONNECTION DEBUG MESSAGES FROM UNDERLYING LIBRARIES
     logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
     logging.getLogger("urllib3.util.retry").setLevel(logging.WARNING)
     logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
@@ -58,13 +54,11 @@ def setup_logger() -> logging.Logger:
 logger = setup_logger()
 
 
-# APPLICATION RAW PATH
 APPLICATION_PATHS = {
     "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "OUTLOOK_PATH": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office 2013\\Outlook 2013.lnk",
 }
 
-# AUTOMATION RAW PATH
 FOLDER_PATHS = {
     # SUBMISSION
     "SUBMISSION_FLOWRATE": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\SUBMISSION",
@@ -93,13 +87,12 @@ CONTACT_INFO = {
 }
 
 
-# TIMING CONFIGURATION CONSTANTS
 WAIT_TIMES = {
-    # MICROSECOND PRECISION TIMERS
+    # MICROSECOND
     "HUNDRED_MICROSECOND": 0.0001,
     "TWO_HUNDRED_MICROSECOND": 0.0002,
     "FIVE_HUNDRED_MICROSECOND": 0.0005,
-    # MILLISECOND PRECISION TIMERS
+    # MILLISECOND
     "ONE_MILLISECOND": 0.001,
     "TWO_MILLISECOND": 0.002,
     "FIVE_MILLISECOND": 0.005,
@@ -108,14 +101,14 @@ WAIT_TIMES = {
     "FIFTY_MILLISECOND": 0.05,
     "HUNDRED_MILLISECOND": 0.1,
     "TWO_HUNDRED_MILLISECOND": 0.2,
-    # SUB-SECOND PRECISION TIMERS
+    # SUB-SECOND
     "TENTH_SECOND": 0.1,
     "EIGHTH_SECOND": 0.125,
     "QUARTER_SECOND": 0.25,
     "THIRD_SECOND": 0.33,
     "HALF_SECOND": 0.5,
     "THREE_QUARTER_SECOND": 0.75,
-    # STANDARD SECOND-BASED TIMERS
+    # STANDARD SECOND
     "ONE_SECOND": 1,
     "ONEHALF_SECOND": 1.5,
     "TWO_SECOND": 2,
@@ -139,7 +132,7 @@ WAIT_TIMES = {
     "FORTYFIVE_SECOND": 45,
     "FIFTY_SECOND": 50,
     "FIFTYFIVE_SECOND": 55,
-    # MINUTE-BASED TIMERS
+    # MINUTE
     "ONE_MINUTE": 60,
     "ONEHALF_MINUTE": 90,
     "TWO_MINUTE": 120,
@@ -163,7 +156,7 @@ WAIT_TIMES = {
     "FIFTY_MINUTE": 3000,
     "FIFTYFIVE_MINUTE": 3300,
     "SIXTY_MINUTE": 3600,
-    # EXTENDED DURATION TIMERS
+    # EXTENDED
     "NORMAL": 1,
     "EXTENDED": 2,
     "LONG": 5,
@@ -171,7 +164,6 @@ WAIT_TIMES = {
     "ULTRA_LONG": 30,
 }
 
-# PYAUTOGUI AUTOMATION SETTINGS
 PYAUTOGUI_SETTINGS = {
     "FAILSAFE": True,
     "TRUE_CONDITION": True,
@@ -190,7 +182,6 @@ PYAUTOGUI_SETTINGS = {
 }
 
 
-# JITTER BEHAVIOR CONFIGURATION
 JITTER_SETTINGS = {
     "STANDARD": {
         "MIN": 0.1,
@@ -214,7 +205,6 @@ JITTER_SETTINGS = {
     },
 }
 
-# LOCALIZATION MAPPING
 MONTHS_ID = {
     "January": "Januari",
     "February": "Februari",
@@ -230,7 +220,6 @@ MONTHS_ID = {
     "December": "Desember",
 }
 
-# MASTER DEFAULT CONFIGURATION
 DEFAULT_CONFIG = {
     **APPLICATION_PATHS,
     **FOLDER_PATHS,
@@ -242,41 +231,31 @@ DEFAULT_CONFIG = {
 }
 
 
-# CONFIGURATION MANAGEMENT FUNCTIONS
 def setup_pyautogui_config() -> None:
-    # PREVENT DUPLICATE CONFIGURATION
     global _pyautogui_configured
     if _pyautogui_configured:
         return
 
-    # APPLY FAILSAFE AND PAUSE SETTINGS
     try:
         pyautogui.FAILSAFE = PYAUTOGUI_SETTINGS["FAILSAFE"]
         pyautogui.PAUSE = PYAUTOGUI_SETTINGS["PAUSE"]
         _pyautogui_configured = True
-
-    # LOG CONFIGURATION ERROR AND RE-RAISE
     except Exception as e:
         logger.error(f"FAILED TO CONFIGURE PYAUTOGUI: {e}")
         raise
 
 
-# LOAD CONFIGURATION AND AUTOMATICALLY SETUP PYAUTOGUI
 def load_config() -> Dict[str, Any]:
     setup_pyautogui_config()
     return DEFAULT_CONFIG
 
 
-# TIMING AND DELAY FUNCTIONS
 def wait_timer(base_time: float) -> None:
     time.sleep(base_time)
 
 
-# WAIT TIMER WITH RANDOM JITTER FOR HUMAN-LIKE BEHAVIOR
 def wait_with_jitter(base_time: float, jitter_type: str = "STANDARD") -> None:
     jitter_config = JITTER_SETTINGS.get(jitter_type, JITTER_SETTINGS["STANDARD"])
-
-    # CALCULATE JITTER IF FACTOR IS GREATER THAN ZERO
     if jitter_config["FACTOR"] > 0:
         jitter = random.uniform(jitter_config["MIN"], jitter_config["MAX"])
         total_time = base_time + (base_time * jitter)
@@ -286,7 +265,6 @@ def wait_with_jitter(base_time: float, jitter_type: str = "STANDARD") -> None:
     wait_timer(total_time)
 
 
-# ADAPTIVE WAIT BASED ON OPERATION TYPE
 def adaptive_wait(operation_type: str = "NORMAL") -> None:
     wait_mapping = {
         "FAST": WAIT_TIMES["HALF_SECOND"],
@@ -295,47 +273,36 @@ def adaptive_wait(operation_type: str = "NORMAL") -> None:
         "VERY_SLOW": WAIT_TIMES["FIVE_SECOND"],
     }
 
-    # GET WAIT TIME FROM MAPPING OR DEFAULT
     wait_time = wait_mapping.get(operation_type, WAIT_TIMES["ONE_SECOND"])
     wait_timer(wait_time)
 
 
-# CONFIGURATION UTILITY FUNCTIONS
 def get_config_value(key: str, default: Any = None) -> Any:
     config = DEFAULT_CONFIG
     keys = key.split(".")
-
-    # TRAVERSE NESTED CONFIGURATION KEYS
     try:
         for k in keys:
             config = config[k]
         return config
-    # RETURN DEFAULT VALUE ON KEY ERROR
     except (KeyError, TypeError):
         return default
 
 
-# GET WAIT TIME VALUE WITH FALLBACK
 def get_wait_time(time_key: str, default: float = 1.0) -> float:
     return WAIT_TIMES.get(time_key, default)
 
 
-# GET PYAUTOGUI SETTING VALUE
 def get_pyautogui_setting(setting_name: str, default: Any = None) -> Any:
     return PYAUTOGUI_SETTINGS.get(setting_name, default)
 
 
-# GET JITTER SETTING VALUE
 def get_jitter_setting(jitter_type: str, default: float = 0.5) -> float:
     jitter_config = JITTER_SETTINGS.get(jitter_type, JITTER_SETTINGS["STANDARD"])
     return jitter_config.get("FACTOR", default)
 
 
-# CONVERT ENGLISH MONTH NAME TO INDONESIAN WITH CASE CONTROL
 def get_month_id(english_month: str, case: str = "as-is") -> str:
     indonesian_month = MONTHS_ID.get(english_month, english_month)
-
-    # APPLY CASE TRANSFORMATION
     if case == "upper":
         return indonesian_month.upper()
     elif case == "lower":

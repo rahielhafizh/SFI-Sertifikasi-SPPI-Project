@@ -49,7 +49,6 @@ def excel_config():
     confirm()
     wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
-    # TIMESTAMP ENSURES UNIQUE FILE NAME FOR EACH RUN
     save_as_name()
     pickup_stamp = datetime.now().strftime("%d-%m ( %H.%M )")
     pickup_filename = f"REPORT SUMMARY PICKUP {pickup_stamp}"
