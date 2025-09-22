@@ -51,7 +51,7 @@ def send_email():
 
     current_time = datetime.now()
     subject_email = f"SUMMARY UPDATE (PENUGASAN DAN KUNJUNGAN) - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    core_email = f"""Yth. Bapak Chief Of Operating Officer,
+    core_email = f"""Yth. Bapak Chief of Operating Officer,
 
 Dengan hormat,
 

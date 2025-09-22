@@ -67,9 +67,10 @@ def send_email():
     secondary_recipients = ["asset.mgmt@sfi.co.id"]
     current_time = datetime.now()
     subject_email = f"SUMMARY UPDATE (DAILY REPPO/PICKUP) - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    core_email = f"""Yth. Bapak Chief Of Operating Officer,
+    core_email = f"""Yth. Bapak Chief of Operating Officer,
     
 Dengan hormat,
+
 Berikut terlampir Summary Update Daily Reppo pada : {current_time.strftime('%d-%m-%Y')} Pukul {current_time.strftime('%H:%M')} WIB.
 
 Catatan

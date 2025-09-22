@@ -86,9 +86,10 @@ def send_email():
     current_time = datetime.now()
     subject_email = f"SUMMARY UPDATE (PREDIKSI FLOWRATE) - {current_time.strftime('%Y-%m-%d %H:%M')}"
 
-    core_email = f"""Yth. Bapak Chief Operating Officer,
+    core_email = f"""Yth. Bapak Chief of Operating Officer,
 
 Dengan hormat,
+
 Berikut terlampir Summary Update Daily Flowrate per tanggal {current_time.strftime('%d-%m-%Y')} Pukul {current_time.strftime('%H:%M')} WIB.
 
 Catatan
