@@ -580,6 +580,20 @@ def switch_to_last_sheet():
     wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
 
 
+def switch_to_right_sheet():
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    logger.info("[SYSTEM] NAVIGATING TO RIGHT SHEET")
+    pyautogui.hotkey("ctrl", "pagedown")
+    wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
+
+
+def switch_to_left_sheet():
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    logger.info("[SYSTEM] NAVIGATING TO RIGHT SHEET")
+    pyautogui.hotkey("ctrl", "pgup")
+    wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
+
+
 def switch_to_table_cells():
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     logger.info("[SYSTEM] NAVIGATING TO TABLE SUMMARY CELLS")
