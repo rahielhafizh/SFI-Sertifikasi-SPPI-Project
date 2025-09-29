@@ -29,7 +29,7 @@ def excel_config():
     switch_to_first_cells()
 
     refresh_excel_data()
-    wait_timer(CONFIG["WAIT_TIME"]["ONEHALF_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
 
     pyautogui.hotkey("ctrl", "pagedown")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
@@ -37,7 +37,7 @@ def excel_config():
     select_sheet_order_in()
     move_or_copy_menu()
     move_or_copy_as_newbook()
-    wait_timer(CONFIG["WAIT_TIME"]["THIRTY_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
 
     break_excel_link()
     switch_to_first_cells()
@@ -48,7 +48,7 @@ def excel_config():
     save_new_book()
     pyautogui.write(CONFIG["SUBMISSION_LOR"])
     confirm()
-    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
 
     set_new_book_name()
     yesterday = datetime.now() - timedelta(days=1)

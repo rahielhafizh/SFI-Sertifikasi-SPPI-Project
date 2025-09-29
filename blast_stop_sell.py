@@ -27,9 +27,8 @@ def get_current_date_info():
     month_name_id = CONFIG["MONTHS_ID"].get(english_month, english_month)
     year = current_date.year
     day = current_date.day
-    subject_text = f"{month_name_id} {year}"
-    filename_text = f"{day} {month_name_id} {year}"
-    return subject_text, filename_text
+
+    return f"{month_name_id} {year}", f"{day} {month_name_id} {year}"
 
 
 def excel_config():
@@ -43,7 +42,7 @@ def excel_config():
     switch_to_first_cells()
 
     refresh_excel_data()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONEHALF_MINUTE"])
 
     switch_to_right_sheet()
     select_sheet_order_in()
@@ -68,20 +67,18 @@ def excel_config():
     stopsell_filename = (
         f"Report Penugasan dan Kunjungan Cabang Stop Sell As of {filename_text}"
     )
-
     pyautogui.write(stopsell_filename, interval=0.05)
     confirm()
     wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
 
     close_no_save()
     wait_timer(CONFIG["WAIT_TIME"]["TWENTY_SECOND"])
-
     switch_to_first_sheet()
     switch_to_right_sheet()
     switch_to_first_cells()
     close_with_save()
 
-    return stopsell_filename, subject_text
+    return subject_text
 
 
 def send_email(subject_text):
@@ -122,7 +119,7 @@ PT Suzuki Finance Indonesia
     )
 
 
-if __name__ == "__main__":
+def main():
     logger.info("[SYSTEM] INITIALISING AUTOMATION PROCESS FOR STOP SELL REPORT")
     start_counter()
 
@@ -137,10 +134,8 @@ if __name__ == "__main__":
     stop_screen_keeper()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
 
-    excel_config()
+    subject_text = excel_config()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
-
-    logger.info(f"[SYSTEM] EXCEL FILE CREATED: {filename}")
 
     send_email(subject_text)
     logger.info("[SYSTEM] AUTOMATION PROCESS COMPLETED SUCCESSFULLY")
@@ -152,3 +147,7 @@ if __name__ == "__main__":
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
     logger.warning("[SYSTEM] RESTARTING SCREEN KEEPER SERVICE")
     run_screen_keeper()
+
+
+if __name__ == "__main__":
+    main()

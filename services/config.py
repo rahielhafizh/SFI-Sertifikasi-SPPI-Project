@@ -165,7 +165,6 @@ WAIT_TIMES = {
 }
 
 PYAUTOGUI_SETTINGS = {
-    "FAILSAFE": True,
     "TRUE_CONDITION": True,
     "FALSE_CONDITION": False,
     "PAUSE": 0.1,
@@ -237,11 +236,11 @@ def setup_pyautogui_config() -> None:
         return
 
     try:
-        pyautogui.FAILSAFE = PYAUTOGUI_SETTINGS["FAILSAFE"]
+        pyautogui.FAILSAFE = PYAUTOGUI_SETTINGS["FALSE_CONDITION"]
         pyautogui.PAUSE = PYAUTOGUI_SETTINGS["PAUSE"]
         _pyautogui_configured = True
     except Exception as e:
-        logger.error(f"FAILED TO CONFIGURE PYAUTOGUI: {e}")
+        logger.error(f"FAILED TO CONFIGURE PYAUTOGUI : {e}")
         raise
 
 
