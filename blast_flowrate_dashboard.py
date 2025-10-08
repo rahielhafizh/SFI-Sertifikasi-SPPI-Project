@@ -30,7 +30,7 @@ def excel_config():
     switch_to_first_sheet()
 
     refresh_excel_data()
-    wait_timer(CONFIG["WAIT_TIME"]["THREE_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
 
     pyautogui.hotkey("ctrl", "pagedown")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
@@ -61,7 +61,7 @@ def excel_config():
     flowrate_filename = f"REPORT SUMMARY FLOWRATE {flowrate_stamp}"
     pyautogui.write(flowrate_filename, interval=0.05)
     confirm()
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
     close_no_save()
     wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])

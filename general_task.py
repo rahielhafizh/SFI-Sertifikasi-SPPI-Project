@@ -57,9 +57,9 @@ def break_excel_link():
     pyautogui.hotkey("left")
     wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
     pyautogui.hotkey("enter")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
     pyautogui.hotkey("esc")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
 
 
 def capture_table_as_bitmap():
@@ -125,18 +125,18 @@ def choose_file_attach():
     pyautogui.press("a")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     pyautogui.press("f")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
     pyautogui.press("tab", presses=6)
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     pyautogui.press("space")
-    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
 
 
 def close_no_save():
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     logger.info("[SYSTEM] CLOSING EXCEL WITHOUT SAVING")
     pyautogui.hotkey("alt", "f4")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
 
 def close_unsave():
@@ -176,7 +176,7 @@ def confirm_file_attach():
     pyautogui.press("space")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     pyautogui.press("enter")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
 
 
 def convert_to_range():
@@ -222,12 +222,16 @@ def handle_not_activated_office():
 
 
 def handle_office():
-    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
     logger.info("[SYSTEM] HANDLING OFFICE DIALOG")
     pyautogui.hotkey("esc")
-    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
     pyautogui.hotkey("esc")
-    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    pyautogui.hotkey("esc")
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    pyautogui.hotkey("esc")
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
 
 
 def input_clipboard_picture():
@@ -387,7 +391,7 @@ def save_new_book():
     pyautogui.press("tab", presses=2)
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     pyautogui.hotkey("enter")
-    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
     pyautogui.press("tab", presses=11)
     wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
     pyautogui.press("space")
