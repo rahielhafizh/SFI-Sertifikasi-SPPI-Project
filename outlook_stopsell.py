@@ -21,6 +21,7 @@ def send_outlook_email(
     try:
         if not open_outlook():
             raise RuntimeError("FAILED TO ACTIVATE OR LAUNCH OUTLOOK")
+        wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
         handle_office()
         maximize_app_window()
         creating_new_task()

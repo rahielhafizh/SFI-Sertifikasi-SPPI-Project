@@ -232,6 +232,8 @@ def handle_office():
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
     pyautogui.hotkey("esc")
     wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    pyautogui.hotkey("enter")
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
 
 
 def input_clipboard_picture():
