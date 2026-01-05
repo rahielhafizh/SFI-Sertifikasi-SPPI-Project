@@ -1,12 +1,9 @@
 import os
-import time
-import keyboard
 import pyautogui
-import win32com.client
 from datetime import datetime
 from general_task import *
-from pynput.keyboard import Key, Controller
-from services.config import load_config, wait_timer, logger
+from pynput.keyboard import Controller
+from services.config import load_config, wait_timer, logger, get_month_id
 from outlook_flowrate import send_outlook_email
 from services.capslock_checker import capslock_checking
 from services.remover_flowrate import clear_submission_folder
@@ -18,33 +15,43 @@ from screen_keeper import (
     run_screen_keeper,
 )
 
+pyautogui.FAILSAFE = False
 CONFIG = load_config()
 keyboard = Controller()
 
 
 def excel_config():
+    logger.info("[SYSTEM] FLOWRATE REPORT EXCEL WORKFLOW")
+
+    if not os.path.exists(CONFIG["WORKSOURCE_FLOWRATE"]):
+        logger.error(f"[ERROR] SOURCE FILE NOT FOUND : {CONFIG['WORKSOURCE_FLOWRATE']}")
+        return None
+
     os.startfile(CONFIG["WORKSOURCE_FLOWRATE"])
-    wait_timer(CONFIG["WAIT_TIME"]["TWENTY_SECOND"])
-    handle_office()
+    wait_timer(CONFIG["WAIT_TIME"]["TWENTYFIVE_SECOND"])
     maximize_app_window()
     switch_to_first_sheet()
+    switch_to_first_cells()
+    move_cell_horizontal()
 
     refresh_excel_data()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["FOUR_MINUTE"])
 
-    pyautogui.hotkey("ctrl", "pagedown")
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-    switch_to_first_sheet()
+    move_cell_horizontal()
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
+    entering_operation()
 
-    for _ in range(2):
-        pyautogui.hotkey("ctrl", "pagedown")
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    switch_to_first_cells()
+    switch_to_right_sheet()
+    switch_to_right_sheet()
+    switch_to_first_cells()
 
     select_sheet_down()
     move_or_copy_menu()
     move_or_copy_as_newbook()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONEHALF_MINUTE"])
 
+    switch_to_table_cells()
     break_excel_link()
     switch_to_first_cells()
     switch_to_table_cells()
@@ -54,24 +61,32 @@ def excel_config():
     save_new_book()
     pyautogui.write(CONFIG["SUBMISSION_FLOWRATE"])
     confirm()
-    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["SEVEN_SECOND"])
 
     set_new_book_name()
-    flowrate_stamp = datetime.now().strftime("%d-%m ( %H.%M )")
-    flowrate_filename = f"REPORT SUMMARY FLOWRATE {flowrate_stamp}"
+    today = datetime.now()
+    month_eng = today.strftime("%B")
+    month_idn_title = get_month_id(month_eng, case="title")
+    flowrate_filename = f"Summary Report Flowrate {datetime.now().strftime('%d')} {month_idn_title} ({today.strftime('%H.%M')})"
     pyautogui.write(flowrate_filename, interval=0.05)
     confirm()
-    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["THIRTY_SECOND"])
 
-    close_no_save()
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
+    switch_to_right_sheet()
+    switch_to_first_sheet()
+    closing_tab()
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
 
     switch_to_first_sheet()
-    for _ in range(2):
-        pyautogui.hotkey("ctrl", "pagedown")
-
     switch_to_first_cells()
-    close_with_save()
+    switch_to_right_sheet()
+    switch_to_first_cells()
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+
+    save_file()
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    closing_tab()
+    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
 
     created_file_path = os.path.join(
         CONFIG["SUBMISSION_FLOWRATE"], f"{flowrate_filename}.xlsx"
@@ -83,14 +98,16 @@ def send_email():
     outlook_recipients = "herberth.simbolon@sfi.co.id"
     secondary_recipients = ["asset.mgmt@sfi.co.id"]
 
-    current_time = datetime.now()
-    subject_email = f"SUMMARY UPDATE (PREDIKSI FLOWRATE) - {current_time.strftime('%Y-%m-%d %H:%M')}"
+    today = datetime.now()
+    month_eng = today.strftime("%B")
+    month_idn_title = get_month_id(month_eng, case="title")
+    subject_email = f"Summary Update Prediksi Flowrate | {datetime.now().strftime('%d')} {month_idn_title} ({today.strftime('%H:%M')})"
 
     core_email = f"""Yth. Bapak Chief of Operating Officer,
 
 Dengan hormat,
 
-Berikut terlampir Summary Update Daily Flowrate per tanggal {current_time.strftime('%d-%m-%Y')} Pukul {current_time.strftime('%H:%M')} WIB.
+Berikut terlampir Summary Update Daily Flowrate per tanggal {datetime.now().strftime('%d')} {month_idn_title} pukul {today.strftime('%H:%M')} WIB.
 
 Catatan
 - Laporan ini dihasilkan secara otomatis dan disusun oleh sistem.
@@ -99,75 +116,93 @@ Seluruh data diperoleh secara real-time namun harap diperhatikan dan dievaluasi 
 """
 
     footer_template = """
-    
-
+ 
+ 
 Hormat kami,
-Asset Management Division
-Collection Head Office
-PT Suzuki Finance Indonesia
+Asset Management Division.
+Collection HO - PT Suzuki Finance Indonesia.
 """
 
-    send_outlook_email(
-        outlook_recipients,
-        secondary_recipients,
-        subject_email,
-        core_email,
-        footer_template,
-    )
+    try:
+        send_outlook_email(
+            outlook_recipients,
+            secondary_recipients,
+            subject_email,
+            core_email,
+            footer_template,
+        )
+    except Exception as exc:
+        logger.error(f"[ERROR] FAILED TO SEND EMAIL : {exc}")
+        raise
 
 
 def validate_and_send_email(created_file_path):
-    if not os.path.exists(created_file_path):
-        logger.error(f"[ERROR] FILE NOT FOUND : {created_file_path}")
+    if not created_file_path:
+        logger.error("[ERROR] NO FILE PATH PROVIDED")
         return False
 
-    validation_result = validate_flowrate_file(created_file_path)
-    if validation_result:
-        logger.info("[DATA] VALIDATION COMPLETE")
-        send_email()
-        logger.info("[SYSTEM] EMAIL SUCCESS")
-        return True
-    else:
-        logger.warning("[DATA] VALIDATION FAILED")
+    if not os.path.exists(created_file_path):
+        logger.error(f"[ERROR] FLOWRATE FILE NOT FOUND : {created_file_path}")
+        return False
+
+    try:
+        validation_result = validate_flowrate_file(created_file_path)
+        if validation_result:
+            logger.info("[DATA] VALIDATION COMPLETE")
+            send_email()
+            return True
+        else:
+            logger.warning("[DATA] VALIDATION FAILED")
+            return False
+    except Exception as exc:
+        logger.error(f"[ERROR] VALIDATION ERROR : {exc}")
         return False
 
 
 def main():
+    logger.info("[SYSTEM] START FLOWRATE REPORT")
     start_counter()
+
     try:
         capslock_checking()
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
         clear_submission_folder(target_folder=CONFIG["SUBMISSION_FLOWRATE"])
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
         find_screen_keeper_process()
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
         stop_screen_keeper()
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
         created_file_path = excel_config()
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-        if not created_file_path or not os.path.exists(created_file_path):
-            logger.error("[ERROR] REPORT NOT CREATED")
+        if not created_file_path:
+            logger.error("[ERROR] FLOWRATE REPORT NOT CREATED")
+            return
+
+        if not os.path.exists(created_file_path):
+            logger.error(f"[ERROR] FILE NOT FOUND : {created_file_path}")
+            return
+
+        logger.info(f"[SYSTEM] REPORT CREATED : {os.path.basename(created_file_path)}")
+
+        if validate_and_send_email(created_file_path):
+            logger.info("[SYSTEM] PROCESS VALID FLOWRATE REPORT")
         else:
-            logger.info(
-                f"[SYSTEM] REPORT CREATED : {os.path.basename(created_file_path)}"
-            )
-            if validate_and_send_email(created_file_path):
-                logger.info("[SYSTEM] PROCESSING REPORT")
-            else:
-                logger.warning("[SYSTEM] PROCESSING REPORT FAILURE")
+            logger.warning("[SYSTEM] PROCESS INVALID FLOWRATE REPORT")
 
+    except KeyboardInterrupt:
+        logger.warning("[SYSTEM] PROCESS INTERRUPTED BY USER")
     except Exception as exc:
-        logger.exception(f"[ERROR] UNHANDLED EXCEPTION : {exc}")
+        logger.exception(f"[ERROR] EXCEPTION : {exc}")
 
     finally:
         stop_counter()
         execution_time = get_duration_result()
         logger.info(f"[TIMER] TOTAL : {execution_time}")
-        wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
         run_screen_keeper()
 
 

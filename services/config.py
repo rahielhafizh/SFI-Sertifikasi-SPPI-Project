@@ -1,12 +1,14 @@
 import logging
 import sys
 import time
-import random
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, List
 from colorlog import ColoredFormatter
+
+# CONFIGURE PYAUTOGUI BEFORE IMPORT
 import pyautogui
 
-_pyautogui_configured = False
+pyautogui.FAILSAFE = False
+pyautogui.PAUSE = 0.1
 
 
 def setup_logger() -> logging.Logger:
@@ -60,30 +62,43 @@ APPLICATION_PATHS = {
 }
 
 FOLDER_PATHS = {
-    # SUBMISSION
+    # SUBMISSION PATH
+    "SUBMISSION_ALDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_ALDA\SUBMISSION",
+    "SUBMISSION_CWO": rf"D:\Rahiel Hafizh\REPORT_CWO\SUBMISSION",
+    "SUBMISSION_DENDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_AKTIF\SUBMISSION",
     "SUBMISSION_FLOWRATE": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\SUBMISSION",
-    "SUBMISSION_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\SUBMISSION",
-    "SUBMISSION_PICKUP": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_PICKUP\SUBMISSION",
     "SUBMISSION_LOR": rf"D:\Rahiel Hafizh\REPORT_LOR_EMAIL\SUBMISSION",
-    "SUBMISSION_PIC": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_AREA\SUBMISSION",
+    "SUBMISSION_PAYMENT": rf"D:\Rahiel Hafizh\REPORT_PENERIMAAN_ANGSURAN\SUBMISSION",
+    "SUBMISSION_PIC": rf"D:\Rahiel Hafizh\REPORT_MOBCOLL_REGULER\SUBMISSION",
+    "SUBMISSION_PICKUP": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_PICKUP\SUBMISSION",
+    "SUBMISSION_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\SUBMISSION",
+    "SUBMISSION_TOD": rf"D:\Rahiel Hafizh\REPORT_AR_TOD\SUBMISSION",
+    # WORKSOURCE FILE
     "CEK-REPORT-FR": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\SUBMISSION\CEK-REPORT.xlsx",
-    # SOURCE
+    "WORKSOURCE_ALDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_ALDA\REPORT-DENDA-ALDA.xlsx",
+    "WORKSOURCE_CWO": rf"D:\Rahiel Hafizh\REPORT_CWO\REPORT-CWO-SRC.xlsx",
+    "WORKSOURCE_DENDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_AKTIF\REPORT-DENDA-SOURCE.xlsx",
     "WORKSOURCE_FLOWRATE": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\UPDATE-FR-SOURCE.xlsx",
-    "WORKSOURCE_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\STOP-SELL-SOURCE.xlsx",
-    "WORKSOURCE_ORDER_IN": rf"D:\Rahiel Hafizh\MARKETING\ORDER-IN\CEK-REPORT.xlsx",
+    "WORKSOURCE_LOR": rf"D:\Rahiel Hafizh\REPORT_LOR_EMAIL\REPORT-LOR-SOURCE.xlsx",
+    "WORKSOURCE_ORDER_IN": rf"C:\EL\MARKETING\FOLDER\SOURCE-ORDER-IN.xlsx",
+    "WORKSOURCE_PAYMENT": rf"D:\Rahiel Hafizh\REPORT_PENERIMAAN_ANGSURAN\PENERIMAAN-ANGSURAN-SRC.xlsx",
     "WORKSOURCE_PICKUP": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_PICKUP\UPDATE-PICKUP-SOURCE.xlsx",
-    "WORKSOURCE_LOR": rf"D:\Rahiel Hafizh\REPORT_LOR_EMAIL\REPORT_LOR_SOURCE.xlsx",
-    "WORKSOURCE_PIC": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_AREA\SUBMISSION\REPORT-PENUGASAN-PIC.xlsx",
+    "WORKSOURCE_PIC": rf"D:\Rahiel Hafizh\REPORT_MOBCOLL_REGULER\SUBMISSION\REPORT-MOBCOLL-REGULER-4W.xlsx",
+    "WORKSOURCE_PPD": rf"C:\EL\MARKETING\FOLDER\NEW-REFRESH-PPD.xlsx",
+    "WORKSOURCE_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\STOP-SELL-SOURCE.xlsx",
+    "WORKSOURCE_TOD": rf"D:\Rahiel Hafizh\REPORT_AR_TOD\REPORT-TOD-SOURCE.xlsx",
 }
 
+
 CONTACT_INFO = {
-    "ASSET_GROUP": "https://web.whatsapp.com/accept?code=KblwmcubP6g04LzqwooTYV",  # LINK GROUP
-    "ADMIN_PRIMARY": "+6281382427588",  # WA ACCOUNT
-    "PERSONAL_ONE": "+6285893093275",  # EL
-    "PERSONAL_TWO": "+6281299606260",  # PAK UGI
-    "PERSONAL_THREE": "+6285781690029",  # PAK RIO
-    "PERSONAL_FOUR": "+6281282426399",  # PAK WAWAN
-    "PERSONAL_FIVE": "+628988171583",  # PAK PANJI
+    "ASSET_GROUP": "https://web.whatsapp.com/accept?code=KblwmcubP6g04LzqwooTYV",
+    "ADMIN_PRIMARY": "+6281382427588",
+    "PERSONAL_COO": "+6282311919875",
+    "PERSONAL_ONE": "+6285893093275",
+    "PERSONAL_TWO": "+6281299606260",
+    "PERSONAL_THREE": "+6285781690029",
+    "PERSONAL_FOUR": "+6281282426399",
+    "PERSONAL_FIVE": "+628988171583",
 }
 
 
@@ -99,7 +114,6 @@ WAIT_TIMES = {
     "TEN_MILLISECOND": 0.01,
     "TWENTY_MILLISECOND": 0.02,
     "FIFTY_MILLISECOND": 0.05,
-    "HUNDRED_MILLISECOND": 0.1,
     "TWO_HUNDRED_MILLISECOND": 0.2,
     # SUB-SECOND
     "TENTH_SECOND": 0.1,
@@ -132,7 +146,7 @@ WAIT_TIMES = {
     "FORTYFIVE_SECOND": 45,
     "FIFTY_SECOND": 50,
     "FIFTYFIVE_SECOND": 55,
-    # MINUTE
+    # MINUTE-BASED TIMERS
     "ONE_MINUTE": 60,
     "ONEHALF_MINUTE": 90,
     "TWO_MINUTE": 120,
@@ -156,7 +170,7 @@ WAIT_TIMES = {
     "FIFTY_MINUTE": 3000,
     "FIFTYFIVE_MINUTE": 3300,
     "SIXTY_MINUTE": 3600,
-    # EXTENDED
+    # EXTENDED TIMERS
     "NORMAL": 1,
     "EXTENDED": 2,
     "LONG": 5,
@@ -165,6 +179,7 @@ WAIT_TIMES = {
 }
 
 PYAUTOGUI_SETTINGS = {
+    "FAILSAFE": False,
     "TRUE_CONDITION": True,
     "FALSE_CONDITION": False,
     "PAUSE": 0.1,
@@ -178,30 +193,6 @@ PYAUTOGUI_SETTINGS = {
     "DEFAULT_PAUSE": 0.1,
     "DEFAULT_DURATION": 0.1,
     "DEFAULT_INTERVAL": 0.05,
-}
-
-
-JITTER_SETTINGS = {
-    "STANDARD": {
-        "MIN": 0.1,
-        "MAX": 0.3,
-        "FACTOR": 0.2,
-    },
-    "AGGRESSIVE": {
-        "MIN": 0.2,
-        "MAX": 0.5,
-        "FACTOR": 0.35,
-    },
-    "CONSERVATIVE": {
-        "MIN": 0.05,
-        "MAX": 0.15,
-        "FACTOR": 0.1,
-    },
-    "NONE": {
-        "MIN": 0.0,
-        "MAX": 0.0,
-        "FACTOR": 0.0,
-    },
 }
 
 MONTHS_ID = {
@@ -219,49 +210,92 @@ MONTHS_ID = {
     "December": "Desember",
 }
 
+AREA_BRANCH_MAPPING: Dict[str, List[str]] = {
+    "IBT": [
+        "DENPASAR",
+        "MATARAM",
+        "KUPANG",
+    ],
+    "JABODETABEKSER": [
+        "KEDOYA",
+        "SUNTER",
+        "BEKASI",
+        "TANGERANG",
+        "BOGOR",
+        "SERANG",
+        "DEWI SARTIKA",
+        "DEPOK",
+    ],
+    "JAWA BARAT": [
+        "BANDUNG",
+        "KARAWANG",
+        "CIREBON",
+    ],
+    "JAWA TENGAH": [
+        "YOGYAKARTA",
+        "SEMARANG",
+        "KUDUS",
+        "PURWOKERTO",
+        "TEGAL",
+        "SOLO",
+    ],
+    "JAWA TIMUR": [
+        "SURABAYA",
+        "MALANG",
+        "GRESIK",
+        "KEDIRI",
+    ],
+    "KALIMANTAN": [
+        "SAMARINDA",
+        "BANJARMASIN",
+        "BALIKPAPAN",
+        "PALANGKARAYA",
+        "BARABAI",
+        "SAMPIT",
+        "PONTIANAK",
+    ],
+    "SULAWESI": [
+        "MAKASSAR",
+        "MANADO",
+        "GORONTALO",
+        "PALU",
+        "KENDARI",
+        "TERNATE",
+    ],
+    "SUMBAGSEL": [
+        "PALEMBANG",
+        "LAMPUNG",
+        "PANGKAL PINANG",
+        "JAMBI",
+    ],
+    "SUMBAGUTENG": [
+        "PEKANBARU",
+        "MEDAN",
+        "BATAM",
+        "PADANG",
+    ],
+}
+
 DEFAULT_CONFIG = {
     **APPLICATION_PATHS,
     **FOLDER_PATHS,
     **CONTACT_INFO,
     "WAIT_TIME": WAIT_TIMES,
     "PYAUTOGUI": PYAUTOGUI_SETTINGS,
-    "JITTER": JITTER_SETTINGS,
     "MONTHS_ID": MONTHS_ID,
+    "AREA_BRANCH_MAPPING": AREA_BRANCH_MAPPING,
 }
 
 
-def setup_pyautogui_config() -> None:
-    global _pyautogui_configured
-    if _pyautogui_configured:
-        return
-
-    try:
-        pyautogui.FAILSAFE = PYAUTOGUI_SETTINGS["FALSE_CONDITION"]
-        pyautogui.PAUSE = PYAUTOGUI_SETTINGS["PAUSE"]
-        _pyautogui_configured = True
-    except Exception as e:
-        logger.error(f"FAILED TO CONFIGURE PYAUTOGUI : {e}")
-        raise
-
-
 def load_config() -> Dict[str, Any]:
-    setup_pyautogui_config()
     return DEFAULT_CONFIG
 
 
 def wait_timer(base_time: float) -> None:
+    if base_time < 0:
+        logger.warning(f"[TIMER] INVALID NEGATIVE VALUE : {base_time}")
+        return
     time.sleep(base_time)
-
-
-def wait_with_jitter(base_time: float, jitter_type: str = "STANDARD") -> None:
-    jitter_config = JITTER_SETTINGS.get(jitter_type, JITTER_SETTINGS["STANDARD"])
-    if jitter_config["FACTOR"] > 0:
-        jitter = random.uniform(jitter_config["MIN"], jitter_config["MAX"])
-        total_time = base_time + (base_time * jitter)
-    else:
-        total_time = base_time
-
-    wait_timer(total_time)
 
 
 def adaptive_wait(operation_type: str = "NORMAL") -> None:
@@ -283,7 +317,9 @@ def get_config_value(key: str, default: Any = None) -> Any:
         for k in keys:
             config = config[k]
         return config
+
     except (KeyError, TypeError):
+        logger.warning(f"[CONFIG] KEY NOT FOUND : {key}")
         return default
 
 
@@ -295,13 +331,9 @@ def get_pyautogui_setting(setting_name: str, default: Any = None) -> Any:
     return PYAUTOGUI_SETTINGS.get(setting_name, default)
 
 
-def get_jitter_setting(jitter_type: str, default: float = 0.5) -> float:
-    jitter_config = JITTER_SETTINGS.get(jitter_type, JITTER_SETTINGS["STANDARD"])
-    return jitter_config.get("FACTOR", default)
-
-
 def get_month_id(english_month: str, case: str = "as-is") -> str:
     indonesian_month = MONTHS_ID.get(english_month, english_month)
+
     if case == "upper":
         return indonesian_month.upper()
     elif case == "lower":
@@ -310,3 +342,7 @@ def get_month_id(english_month: str, case: str = "as-is") -> str:
         return indonesian_month.title()
     else:
         return indonesian_month
+
+
+def area_branch_mapping() -> Dict[str, List[str]]:
+    return AREA_BRANCH_MAPPING.copy()

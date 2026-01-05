@@ -202,11 +202,9 @@ class FlowrateDateValidator:
             results.append(result)
 
             if result.is_valid:
-                logger.info(f"VALIDATION {cell_address} OK | {result.actual_value}")
+                logger.info(f"VALIDATION {cell_address} : {result.actual_value}")
             else:
-                logger.warning(
-                    f"VALIDATION {cell_address} FAIL | {result.error_message}"
-                )
+                logger.warning(f"VALIDATION {cell_address} : {result.error_message}")
         return results
 
     def is_validation_successful(self, results: List[DateValidationResult]) -> bool:
@@ -244,7 +242,7 @@ def validate_flowrate_file(file_path, config=None, reference_date=None) -> bool:
         return validator.is_validation_successful(results)
 
     except Exception as e:
-        logger.error(f"VALIDATION FAIL | {e}")
+        logger.error(f"VALIDATION FAIL {e}")
         return False
 
 
@@ -281,7 +279,7 @@ def validate_flowrate_by_timestamp(timestamp, config=None, reference_date=None) 
         )
 
     except Exception as e:
-        logger.error(f"TIMESTAMP FAIL | {e}")
+        logger.error(f"TIMESTAMP PROBLEM {e}")
         return False
 
 
@@ -295,7 +293,6 @@ def main():
     for name, result in results:
         logger.info(f"{name} | {'PASS' if result else 'FAIL'}")
     overall = all(r for _, r in results)
-    logger.info(f"OVERALL | {'PASS' if overall else 'FAIL'}")
     return overall
 
 

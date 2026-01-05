@@ -19,7 +19,7 @@ keyboard = Controller()
 
 
 def excel_config():
-    logger.info("[SYSTEM] INITIATING EXCEL WORKFLOW FOR LOR PREDICTION")
+    logger.info("[SYSTEM] MOBCOLL LOR REPORT EXCEL WORKFLOW")
 
     os.startfile(CONFIG["WORKSOURCE_LOR"])
     wait_timer(CONFIG["WAIT_TIME"]["TWENTY_SECOND"])
@@ -30,16 +30,17 @@ def excel_config():
 
     refresh_excel_data()
     wait_timer(CONFIG["WAIT_TIME"]["TWO_MINUTE"])
+    entering_operation()
 
-    pyautogui.hotkey("ctrl", "pagedown")
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-    select_sheet_order_in()
+    switch_to_right_sheet()
+    switch_to_right_sheet()
+    select_sheet_down()
     move_or_copy_menu()
     move_or_copy_as_newbook()
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_MINUTE"])
+    wait_timer(CONFIG["WAIT_TIME"]["THIRTY_SECOND"])
 
     break_excel_link()
+    switch_to_first_sheet()
     switch_to_first_cells()
     switch_to_table_cells()
     capture_table_as_picture()
@@ -48,61 +49,57 @@ def excel_config():
     save_new_book()
     pyautogui.write(CONFIG["SUBMISSION_LOR"])
     confirm()
-    wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
 
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
     set_new_book_name()
     yesterday = datetime.now() - timedelta(days=1)
     lor_day = yesterday.strftime("%d")
-    lor_year = yesterday.strftime("%Y")
+    year = yesterday.strftime("%Y")
     month_eng = yesterday.strftime("%B")
-    month_idn_upper = get_month_id(month_eng, case="upper")
-
-    lor_filename = f"REPORT MOBCOLL LOR PERIODE {lor_day} {month_idn_upper} {lor_year}"
+    month_idn_title = get_month_id(month_eng, case="title")
+    lor_filename = f"Summary Mobcoll LOR Periode {lor_day} {month_idn_title} {year}"
     pyautogui.write(lor_filename, interval=0.05)
     confirm()
-
     wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
-    close_no_save()
+    closing_tab()
     wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
 
     switch_to_first_sheet()
     switch_to_first_cells()
-    close_with_save()
+    save_file()
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
+    closing_tab()
+    wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
 
-    logger.info("[SYSTEM] EXCEL WORKFLOW COMPLETED SUCCESSFULLY")
+    logger.info("[SYSTEM] MOBCOLL LOR WORKFLOW COMPLETE")
 
 
 def send_email():
-    outlook_recipients = "asset.mgmt@sfi.co.id"
-    secondary_recipients = ["CollHO.3@sfi.co.id"]
+    outlook_recipients = ["asset.mgmt@sfi.co.id"]
+    secondary_recipients = "collho.3@sfi.co.id"
 
     yesterday = datetime.now() - timedelta(days=1)
-    lor_year = yesterday.strftime("%Y")
+    year = yesterday.strftime("%Y")
     month_eng = yesterday.strftime("%B")
-    month_idn_upper = get_month_id(month_eng, case="upper")
     month_idn_title = get_month_id(month_eng, case="title")
-
-    subject_email = (
-        f"SUMMARY UPDATE REPORT MOBCOLL LOR PERIODE {month_idn_upper} {lor_year}"
-    )
+    subject_email = f"Summary Update Mobcoll LOR | Periode {month_idn_title} {year}"
 
     core_email = f"""Dear All,
 
 Dengan hormat,
-Berikut terlampir Summary Update Penugasan Mobile Collection LOR pada Periode {month_idn_title} {lor_year}
+Berikut terlampir Summary Update Penugasan dan Kunjungan PIC LOR pada Periode {month_idn_title} {year}
 
 Catatan
 - Laporan ini dihasilkan secara otomatis dan disusun oleh sistem.
 Harap diperhatikan serta dapat dievaluasi kembali.
-
 """
 
     footer_template = """
 
+
 Hormat kami,
-Asset Management Division
-Collection Head Office
-PT Suzuki Finance Indonesia
+Asset Management Division.
+Collection HO - PT Suzuki Finance Indonesia.
 """
 
     send_outlook_email(
@@ -112,34 +109,33 @@ PT Suzuki Finance Indonesia
         core_email,
         footer_template,
     )
-    logger.info("[DATA] EMAIL SENT SUCCESSFULLY")
 
 
 if __name__ == "__main__":
-    logger.info("[SYSTEM] INITIALISING AUTOMATION PROCESS FOR LOR PREDICTION REPORT")
+    logger.info("[SYSTEM] START MOBCOLL LOR REPORT")
     start_counter()
 
     capslock_checking()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
     clear_submission_folder(target_folder=CONFIG["SUBMISSION_LOR"])
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
     find_screen_keeper_process()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     stop_screen_keeper()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
     excel_config()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
     send_email()
-    logger.info("[SYSTEM] AUTOMATION PROCESS COMPLETED SUCCESSFULLY")
+    logger.info("[SYSTEM] MOBCOLL LOR REPORT SENT")
 
     stop_counter()
     execution_time = get_duration_result()
-    logger.info(f"[SYSTEM] TOTAL EXECUTION TIME: {execution_time}")
+    logger.info(f"[SYSTEM] TOTAL EXECUTION TIME : {execution_time}")
 
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
-    logger.warning("[SYSTEM] RESTARTING SCREEN KEEPER SERVICE")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    logger.warning("[SYSTEM] RESTARTING SCREEN KEEPER")
     run_screen_keeper()

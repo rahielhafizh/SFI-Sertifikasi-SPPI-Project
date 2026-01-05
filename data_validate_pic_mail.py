@@ -160,9 +160,7 @@ class PicDateTimeValidatorMail:
         cell_address = "K2"
         result = self.validate_cell_datetime(df, cell_address, expected_date)
         if result.is_valid:
-            logger.info(
-                f"[DATA] CELL {cell_address} VALIDATED SUCCESSFULLY | VALUE: {result.actual_value}"
-            )
+            logger.info(f"[DATA] CELL {cell_address} VALIDATED SUCCESSFULLY")
 
         else:
             logger.error(f"[ERROR] {result.error_message}")
@@ -175,46 +173,39 @@ class PicDateTimeValidatorMail:
 def validate_pic_data_for_email(file_path: Optional[str] = None) -> bool:
     try:
         target_file = file_path or CONFIG["WORKSOURCE_PIC"]
-
-        logger.info(
-            f"[SYSTEM] STARTING PIC DATETIME VALIDATION FOR EMAIL: {target_file}"
-        )
+        logger.info(f"[SYSTEM] VALIDATING MOBCOLL REGULER : {target_file}")
 
         if not os.path.exists(target_file):
-            logger.error(f"[ERROR] EXCEL FILE NOT FOUND: {target_file}")
+            logger.error(f"[ERROR] {target_file} NOT EXIST")
             return False
 
         validator = PicDateTimeValidatorMail(CONFIG)
         validation_results = validator.validate_pic_datetime(target_file)
         is_valid = validator.is_data_valid(validation_results)
         if is_valid:
-            logger.info("[DATA] PIC DATETIME VALIDATION PASSED - EMAIL CAN BE SENT")
+            logger.info("[DATA] MOBCOLL REGULER VALID")
             return True
 
         for result in validation_results:
             if not result.is_valid:
-                logger.warning(
-                    f"[VALIDATION] {result.error_message} | "
-                    f"EXPECTED: TODAY ({result.expected_date.strftime('%d/%m/%Y')}) | "
-                    f"ACTUAL: {result.actual_value}"
-                )
+                logger.warning(f"[VALIDATION] {result.error_message}")
         return False
 
     except Exception as e:
-        logger.error(f"[ERROR] PIC DATETIME VALIDATION ERROR FOR EMAIL: {e}")
+        logger.error(f"[ERROR] MOBCOLL REGULER INVALID {e}")
         return False
 
 
 def validate_pic_file_for_email(file_path: str) -> bool:
     if not file_path:
-        logger.error("[ERROR] FILE PATH CANNOT BE EMPTY")
+        logger.error("[ERROR] FILE PATH EMPTY")
         return False
 
     if not os.path.exists(file_path):
-        logger.error(f"[ERROR] FILE NOT FOUND: {file_path}")
+        logger.error(f"[ERROR] {file_path} NOT FOUND")
         return False
 
-    logger.info(f"[SYSTEM] VALIDATING PIC FILE: {file_path}")
+    logger.info(f"[SYSTEM] VALIDATING {file_path}")
     return validate_pic_data_for_email(file_path)
 
 

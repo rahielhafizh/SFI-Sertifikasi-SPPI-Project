@@ -194,9 +194,9 @@ class WindowController:
                     if window_foreground_waiter(
                         hwnd,
                         timeout=(
-                            CONFIG["WAIT_TIME"]["FIFTEEN_SECOND"]
+                            CONFIG["WAIT_TIME"]["TEN_SECOND"]
                             if "WAIT_TIME" in CONFIG
-                            and "FIFTEEN_SECOND" in CONFIG["WAIT_TIME"]
+                            and "TEN_SECOND" in CONFIG["WAIT_TIME"]
                             else 5
                         ),
                     ):
@@ -252,7 +252,7 @@ class BaseAppManager(ABC):
             logger.error(f"[SYSTEM] FAILED TO LAUNCH {self.name.upper()}: {e}")
             return False
 
-        wait_timer(CONFIG["WAIT_TIME"]["FIFTEEN_SECOND"])
+        wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
         hwnd = self.window_checker()
         if hwnd:
             return self.controller.activate(hwnd) and self.controller.maximize(hwnd)
@@ -292,7 +292,7 @@ class OutlookManager(BaseAppManager):
     def send_command(self, keys, desc: str = "") -> bool:
         hwnd = self.window_checker()
         if hwnd and self.controller.activate(hwnd):
-            wait_timer(CONFIG["WAIT_TIME"]["FIFTEEN_SECOND"])
+            wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
             try:
                 if isinstance(keys, list):
                     pyautogui.hotkey(*keys)
@@ -335,5 +335,5 @@ def check_outlook_status() -> bool:
 
 if __name__ == "__main__":
     open_chrome()
-    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     open_outlook()

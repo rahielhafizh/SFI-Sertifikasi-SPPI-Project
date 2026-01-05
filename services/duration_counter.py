@@ -3,40 +3,40 @@ import datetime
 from services.config import logger
 
 
-_start_time = None
-_end_time = None
-_is_running = False
+start_timer = None
+end_timer = None
+on_going = False
 
 
 def start_counter():
-    global _start_time, _is_running
-    _start_time = time.time()
-    _is_running = True
+    global start_timer, on_going
+    start_timer = time.time()
+    on_going = True
     logger.warning(
-        f"[SYSTEM] TIMER STARTED AT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"[SYSTEM] TIMER START AT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    return _start_time
+    return start_timer
 
 
 def stop_counter():
-    global _end_time, _is_running
-    if not _is_running:
-        logger.error("[ERROR] TIMER HAS NOT BEEN STARTED")
+    global end_timer, on_going
+    if not on_going:
+        logger.error("[ERROR] TIMER NOT STARTED")
         return None
-    _end_time = time.time()
-    _is_running = False
+    end_timer = time.time()
+    on_going = False
     logger.warning(
-        f"[SYSTEM] TIMER STOPPED AT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"[SYSTEM] TIMER STOP AT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    return _end_time
+    return end_timer
 
 
 def get_duration_result(format_output=True):
-    global _start_time, _end_time
-    if _start_time is None:
-        logger.error("[ERROR] TIMER HAS NOT BEEN STARTED, DURATION UNAVAILABLE")
+    global start_timer, end_timer
+    if start_timer is None:
+        logger.error("[ERROR] TIMER NOT STARTED, DURATION UNAVAILABLE")
         return None
-    execution_seconds = (time.time() if _end_time is None else _end_time) - _start_time
+    execution_seconds = (time.time() if end_timer is None else end_timer) - start_timer
     if format_output:
         hours, remainder = divmod(execution_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
@@ -53,15 +53,15 @@ def log_counter_execution(process_name=None):
 
 
 def reset_timer():
-    global _start_time, _end_time, _is_running
-    _start_time = None
-    _end_time = None
-    _is_running = False
-    logger.debug("[SYSTEM] TIMER HAS BEEN RESET")
+    global start_timer, end_timer, on_going
+    start_timer = None
+    end_timer = None
+    on_going = False
+    logger.debug("[SYSTEM] TIMER RESET")
 
 
-def is_timer_running():
-    return _is_running
+def check_running_timer():
+    return on_going
 
 
 class ExecutionTimer:

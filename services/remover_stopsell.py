@@ -20,16 +20,16 @@ def delete_files(files: List[str], dry_run: bool = False) -> Dict[str, int]:
         file_name = os.path.basename(file_path)
 
         if dry_run:
-            logger.info(f"[SYSTEM] DRY RUN – SKIPPING DELETION FOR: {file_name}")
+            logger.info(f"[SYSTEM] DRY RUN REMOVING : {file_name}")
             continue
 
         try:
             os.remove(file_path)
-            logger.info(f"[SYSTEM] SUCCESSFULLY DELETED FILE: {file_name}")
+            logger.info(f"[SYSTEM] DELETE {file_name} SUCCESS")
             deleted_count += 1
 
         except Exception:
-            logger.error(f"[SYSTEM] FAILED TO DELETE FILE: {file_name}", exc_info=True)
+            logger.error(f"[SYSTEM] FAILED TO DELETE {file_name}", exc_info=True)
             failed_count += 1
 
     return {"deleted": deleted_count, "failed": failed_count}
@@ -37,9 +37,7 @@ def delete_files(files: List[str], dry_run: bool = False) -> Dict[str, int]:
 
 def log_deletion_summary(summary: Dict[str, int], dry_run: bool) -> None:
     mode = "DRY RUN" if dry_run else "ACTUAL RUN"
-    logger.info(
-        f"[SYSTEM] {mode} SUMMARY – DELETED : {summary['deleted']} | FAILED : {summary['failed']}"
-    )
+    logger.info(f"[{mode}] DELETED : {summary['deleted']} FAILED : {summary['failed']}")
 
 
 def clear_submission_folder(
@@ -48,17 +46,15 @@ def clear_submission_folder(
     dry_run: bool = False,
 ) -> Dict[str, int]:
     if not os.path.exists(target_folder):
-        logger.error(f"[SYSTEM] TARGET FOLDER DOES NOT EXIST: {target_folder}")
+        logger.error(f"[SYSTEM] {target_folder} DOES NOT EXIST")
         return {"deleted": 0, "failed": 0}
 
     matching_files = get_matching_files(target_folder, filename_pattern)
     if not matching_files:
-        logger.warning(f"[SYSTEM] NO MATCHING FILES FOUND IN FOLDER: {target_folder}")
+        logger.warning(f"[SYSTEM] NO FILES MACTHED IN {target_folder}")
         return {"deleted": 0, "failed": 0}
 
-    logger.info(
-        f"[SYSTEM] FOUND {len(matching_files)} FILE(S) TO DELETE IN: {target_folder}"
-    )
+    logger.info(f"[SYSTEM] DELETE {len(matching_files)} IN {target_folder}")
     summary = delete_files(matching_files, dry_run=dry_run)
     log_deletion_summary(summary, dry_run=dry_run)
     return summary
