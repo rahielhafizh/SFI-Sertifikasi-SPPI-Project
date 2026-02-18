@@ -1,10 +1,9 @@
 import logging
 import sys
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from colorlog import ColoredFormatter
 
-# CONFIGURE PYAUTOGUI BEFORE IMPORT
 import pyautogui
 
 pyautogui.FAILSAFE = False
@@ -61,34 +60,6 @@ APPLICATION_PATHS = {
     "OUTLOOK_PATH": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office 2013\\Outlook 2013.lnk",
 }
 
-FOLDER_PATHS = {
-    # SUBMISSION PATH
-    "SUBMISSION_ALDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_ALDA\SUBMISSION",
-    "SUBMISSION_CWO": rf"D:\Rahiel Hafizh\REPORT_CWO\SUBMISSION",
-    "SUBMISSION_DENDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_AKTIF\SUBMISSION",
-    "SUBMISSION_FLOWRATE": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\SUBMISSION",
-    "SUBMISSION_LOR": rf"D:\Rahiel Hafizh\REPORT_LOR_EMAIL\SUBMISSION",
-    "SUBMISSION_PAYMENT": rf"D:\Rahiel Hafizh\REPORT_PENERIMAAN_ANGSURAN\SUBMISSION",
-    "SUBMISSION_PIC": rf"D:\Rahiel Hafizh\REPORT_MOBCOLL_REGULER\SUBMISSION",
-    "SUBMISSION_PICKUP": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_PICKUP\SUBMISSION",
-    "SUBMISSION_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\SUBMISSION",
-    "SUBMISSION_TOD": rf"D:\Rahiel Hafizh\REPORT_AR_TOD\SUBMISSION",
-    # WORKSOURCE FILE
-    "CEK-REPORT-FR": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\SUBMISSION\CEK-REPORT.xlsx",
-    "WORKSOURCE_ALDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_ALDA\REPORT-DENDA-ALDA.xlsx",
-    "WORKSOURCE_CWO": rf"D:\Rahiel Hafizh\REPORT_CWO\REPORT-CWO-SRC.xlsx",
-    "WORKSOURCE_DENDA": rf"D:\Rahiel Hafizh\REPORT_DENDA_AKTIF\REPORT-DENDA-SOURCE.xlsx",
-    "WORKSOURCE_FLOWRATE": rf"D:\Rahiel Hafizh\REPORT_FLOWRATE\UPDATE-FR-SOURCE.xlsx",
-    "WORKSOURCE_LOR": rf"D:\Rahiel Hafizh\REPORT_LOR_EMAIL\REPORT-LOR-SOURCE.xlsx",
-    "WORKSOURCE_ORDER_IN": rf"C:\EL\MARKETING\FOLDER\SOURCE-ORDER-IN.xlsx",
-    "WORKSOURCE_PAYMENT": rf"D:\Rahiel Hafizh\REPORT_PENERIMAAN_ANGSURAN\PENERIMAAN-ANGSURAN-SRC.xlsx",
-    "WORKSOURCE_PICKUP": rf"D:\Rahiel Hafizh\REPORT_SUMMARY_PICKUP\UPDATE-PICKUP-SOURCE.xlsx",
-    "WORKSOURCE_PIC": rf"D:\Rahiel Hafizh\REPORT_MOBCOLL_REGULER\SUBMISSION\REPORT-MOBCOLL-REGULER-4W.xlsx",
-    "WORKSOURCE_PPD": rf"C:\EL\MARKETING\FOLDER\NEW-REFRESH-PPD.xlsx",
-    "WORKSOURCE_STOPSELL": rf"D:\Rahiel Hafizh\REPORT_STOPSELL\STOP-SELL-SOURCE.xlsx",
-    "WORKSOURCE_TOD": rf"D:\Rahiel Hafizh\REPORT_AR_TOD\REPORT-TOD-SOURCE.xlsx",
-}
-
 
 CONTACT_INFO = {
     "ASSET_GROUP": "https://web.whatsapp.com/accept?code=KblwmcubP6g04LzqwooTYV",
@@ -103,11 +74,9 @@ CONTACT_INFO = {
 
 
 WAIT_TIMES = {
-    # MICROSECOND
     "HUNDRED_MICROSECOND": 0.0001,
     "TWO_HUNDRED_MICROSECOND": 0.0002,
     "FIVE_HUNDRED_MICROSECOND": 0.0005,
-    # MILLISECOND
     "ONE_MILLISECOND": 0.001,
     "TWO_MILLISECOND": 0.002,
     "FIVE_MILLISECOND": 0.005,
@@ -115,14 +84,12 @@ WAIT_TIMES = {
     "TWENTY_MILLISECOND": 0.02,
     "FIFTY_MILLISECOND": 0.05,
     "TWO_HUNDRED_MILLISECOND": 0.2,
-    # SUB-SECOND
     "TENTH_SECOND": 0.1,
     "EIGHTH_SECOND": 0.125,
     "QUARTER_SECOND": 0.25,
     "THIRD_SECOND": 0.33,
     "HALF_SECOND": 0.5,
     "THREE_QUARTER_SECOND": 0.75,
-    # STANDARD SECOND
     "ONE_SECOND": 1,
     "ONEHALF_SECOND": 1.5,
     "TWO_SECOND": 2,
@@ -146,7 +113,6 @@ WAIT_TIMES = {
     "FORTYFIVE_SECOND": 45,
     "FIFTY_SECOND": 50,
     "FIFTYFIVE_SECOND": 55,
-    # MINUTE-BASED TIMERS
     "ONE_MINUTE": 60,
     "ONEHALF_MINUTE": 90,
     "TWO_MINUTE": 120,
@@ -170,7 +136,6 @@ WAIT_TIMES = {
     "FIFTY_MINUTE": 3000,
     "FIFTYFIVE_MINUTE": 3300,
     "SIXTY_MINUTE": 3600,
-    # EXTENDED TIMERS
     "NORMAL": 1,
     "EXTENDED": 2,
     "LONG": 5,
@@ -276,14 +241,93 @@ AREA_BRANCH_MAPPING: Dict[str, List[str]] = {
     ],
 }
 
+BRANCH_ORDER = [
+    "BALIKPAPAN",
+    "BANDAR LAMPUNG",
+    "BANDUNG",
+    "BANJARMASIN",
+    "BATAM",
+    "BEKASI",
+    "BOGOR",
+    "CIREBON",
+    "DENPASAR",
+    "DEPOK",
+    "DEWI SARTIKA",
+    "GORONTALO",
+    "GRESIK",
+    "JAMBI",
+    "KARAWANG",
+    "KEDIRI",
+    "KEDOYA",
+    "KENDARI",
+    "KUDUS",
+    "KUPANG",
+    "MAKASSAR",
+    "MALANG",
+    "MANADO",
+    "MATARAM",
+    "MEDAN",
+    "PALANGKARAYA",
+    "PALEMBANG",
+    "PALU",
+    "PANGKAL PINANG",
+    "PEKANBARU",
+    "PONTIANAK",
+    "PURWOKERTO",
+    "SAMARINDA",
+    "SAMPIT",
+    "SEMARANG",
+    "SERANG",
+    "SOLO",
+    "SUNTER",+
+    "SURABAYA",
+    "TANGERANG",
+    "TEGAL",
+    "TERNATE",
+    "YOGYAKARTA",
+]
+
+# process_certification_reminders(filter_preset="SIX_MONTHS")
+CERTIFICATION_FILTER_PRESETS = {
+    "NEXT_MONTH": {"MODE": "NEXT_MONTH"},
+    "TWO_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 2},
+    "THREE_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 3},
+    "FOUR_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 4},
+    "FIVE_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 5},
+    "SIX_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 6},
+    "SEVEN_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 7},
+    "EIGHT_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 8},
+    "NINE_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 9},
+    "TEN_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 10},
+    "ELEVEN_MONTHS": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 11},
+    "ONE_YEAR": {"MODE": "NEXT_N_MONTHS", "MONTHS_AHEAD": 12},
+    "THIRTY_DAYS": {"MODE": "DAYS_RANGE", "DAYS_AHEAD": 30},
+    "SIXTY_DAYS": {"MODE": "DAYS_RANGE", "DAYS_AHEAD": 60},
+    "NINETY_DAYS": {"MODE": "DAYS_RANGE", "DAYS_AHEAD": 90},
+    "ONE_HUNDRED_TWENTY_DAYS": {"MODE": "DAYS_RANGE", "DAYS_AHEAD": 120},
+    "ONE_HUNDRED_EIGHTY_DAYS": {"MODE": "DAYS_RANGE", "DAYS_AHEAD": 180},
+    "CUSTOM_DATE_RANGE": {
+        "MODE": "SPECIFIC_DATE_RANGE",
+        "START_DATE": None,
+        "END_DATE": None,
+    },
+}
+
+CERTIFICATION_FILTER_CONFIG = {
+    "ACTIVE_PRESET": "NEXT_MONTH",
+    "CUSTOM_CONFIG": None,
+}
+
 DEFAULT_CONFIG = {
     **APPLICATION_PATHS,
-    **FOLDER_PATHS,
     **CONTACT_INFO,
     "WAIT_TIME": WAIT_TIMES,
     "PYAUTOGUI": PYAUTOGUI_SETTINGS,
     "MONTHS_ID": MONTHS_ID,
     "AREA_BRANCH_MAPPING": AREA_BRANCH_MAPPING,
+    "BRANCH_ORDER": BRANCH_ORDER,
+    "CERTIFICATION_FILTER_PRESETS": CERTIFICATION_FILTER_PRESETS,
+    "CERTIFICATION_FILTER_CONFIG": CERTIFICATION_FILTER_CONFIG,
 }
 
 
@@ -346,3 +390,56 @@ def get_month_id(english_month: str, case: str = "as-is") -> str:
 
 def area_branch_mapping() -> Dict[str, List[str]]:
     return AREA_BRANCH_MAPPING.copy()
+
+
+def get_branch_order() -> List[str]:
+    return BRANCH_ORDER.copy()
+
+
+def get_certification_filter_config(preset: Optional[str] = None) -> Dict[str, Any]:
+    if preset is None:
+        preset = CERTIFICATION_FILTER_CONFIG["ACTIVE_PRESET"]
+
+    if CERTIFICATION_FILTER_CONFIG["CUSTOM_CONFIG"] is not None:
+        logger.info("[CONFIG] USING CUSTOM CERTIFICATION FILTER CONFIGURATION")
+        return CERTIFICATION_FILTER_CONFIG["CUSTOM_CONFIG"]
+
+    if preset in CERTIFICATION_FILTER_PRESETS:
+        logger.info(f"[CONFIG] USING CERTIFICATION FILTER PRESET : {preset}")
+        return CERTIFICATION_FILTER_PRESETS[preset].copy()
+    else:
+        logger.warning(
+            f"[CONFIG] UNKNOWN PRESET '{preset}', DEFAULTING TO 'NEXT_MONTH'"
+        )
+        return CERTIFICATION_FILTER_PRESETS["NEXT_MONTH"].copy()
+
+
+def set_certification_filter_preset(preset: str) -> bool:
+    if preset in CERTIFICATION_FILTER_PRESETS:
+        CERTIFICATION_FILTER_CONFIG["ACTIVE_PRESET"] = preset
+        CERTIFICATION_FILTER_CONFIG["CUSTOM_CONFIG"] = None
+        logger.info(f"[CONFIG] CERTIFICATION FILTER PRESET SET TO : {preset}")
+        return True
+    else:
+        logger.error(f"[CONFIG] INVALID PRESET NAME : {preset}")
+        return False
+
+
+def set_custom_certification_filter(custom_config: Dict[str, Any]) -> bool:
+    required_mode = custom_config.get("MODE")
+    if required_mode not in [
+        "NEXT_MONTH",
+        "NEXT_N_MONTHS",
+        "DAYS_RANGE",
+        "SPECIFIC_DATE_RANGE",
+    ]:
+        logger.error(f"[CONFIG] INVALID MODE IN CUSTOM FILTER : {required_mode}")
+        return False
+
+    CERTIFICATION_FILTER_CONFIG["CUSTOM_CONFIG"] = custom_config
+    logger.info("[CONFIG] CUSTOM CERTIFICATION FILTER CONFIGURATION APPLIED")
+    return True
+
+
+def list_certification_filter_presets() -> List[str]:
+    return list(CERTIFICATION_FILTER_PRESETS.keys())

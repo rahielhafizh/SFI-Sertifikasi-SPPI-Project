@@ -1,4 +1,3 @@
-# bapk_convert.py
 import pyodbc
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -9,7 +8,7 @@ from services.db_connection import get_database_connection
 def fetch_dashboard_control_data(conn):
     try:
         cursor = conn.cursor()
-        query = "SELECT * FROM Dashboard_Control"
+        query = "SELECT * FROM [SFI_DWH].[dbo].[Dashboard_Control]"
         cursor.execute(query)
         
         columns = [column[0] for column in cursor.description]
@@ -32,7 +31,6 @@ def create_excel_file(columns, rows, filename=None):
         sheet = workbook.active
         sheet.title = "Dashboard_Control"
         
-        # HEADER STYLING
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         header_font = Font(bold=True, color="FFFFFF", size=11)
         header_alignment = Alignment(horizontal="center", vertical="center")
