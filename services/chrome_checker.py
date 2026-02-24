@@ -281,11 +281,7 @@ class ChromeManager(BaseAppManager):
 
 class OutlookManager(BaseAppManager):
     def __init__(self, path: str):
-        super().__init__("outlook", path)ara
-
-
-
-        
+        super().__init__("outlook", path)
 
     def window_checker(self) -> Optional[int]:
         return window_checker("outlook", class_filter="rctrl_renwnd32")

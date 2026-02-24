@@ -279,7 +279,7 @@ BRANCH_ORDER = [
     "SEMARANG",
     "SERANG",
     "SOLO",
-    "SUNTER",+
+    "SUNTER",
     "SURABAYA",
     "TANGERANG",
     "TEGAL",
