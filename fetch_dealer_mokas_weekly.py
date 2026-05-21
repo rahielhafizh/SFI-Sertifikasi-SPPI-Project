@@ -1,7 +1,7 @@
-import pyodbc
 from datetime import datetime, timedelta
+
 from services.db_connection import get_database_connection
-from services.config import load_config, wait_timer, logger, get_month_id
+from services.config import load_config, logger, get_month_id
 from services.database_mokas import fetch_dealer_mokas_data
 from services.mokas_utils import filter_mokas_birthdays, sort_by_birth_date
 from services.email_formatter import format_mokas_email_body
@@ -13,7 +13,7 @@ TARGET_EMAIL = "herberth.simbolon@sfi.co.id"
 
 def process_weekly_mokas_birthdays(minimize_after_send: bool = True) -> bool:
     conn = get_database_connection()
-    if conn is None:
+    if not conn:
         logger.error("[ERROR] DATABASE CONNECTION UNAVAILABLE")
         return False
 
@@ -21,18 +21,18 @@ def process_weekly_mokas_birthdays(minimize_after_send: bool = True) -> bool:
         logger.info("[SYSTEM] FETCHING DEALER MOKAS DATA FROM DATABASE")
         columns, rows = fetch_dealer_mokas_data(conn)
 
-        if columns is None or rows is None:
+        if not columns or rows is None:
             logger.error("[ERROR] FAILED TO FETCH DATA FROM DATABASE")
             return False
 
-        if len(rows) == 0:
+        if not rows:
             logger.warning("[WARNING] NO DATA FOUND IN DATABASE")
             return False
 
         filtered_rows = filter_mokas_birthdays(columns, rows, "WEEKLY")
         logger.info(f"[SYSTEM] FILTERED {len(filtered_rows)} WEEKLY ROWS")
 
-        if len(filtered_rows) == 0:
+        if not filtered_rows:
             logger.info("[SYSTEM] NO MOKAS BIRTHDAYS FOUND FOR THIS WEEK")
             return True
 
@@ -52,7 +52,6 @@ def process_weekly_mokas_birthdays(minimize_after_send: bool = True) -> bool:
         email_body = format_mokas_email_body(
             "Minggu Ini", period_value, sorted_rows, columns
         )
-
         subject = f"Pemberitahuan Ulang Tahun Pemilik Dealer Mokas ({period_value})"
 
         success = send_mokas_email(

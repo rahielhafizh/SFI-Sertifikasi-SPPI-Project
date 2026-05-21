@@ -21,7 +21,7 @@ def fetch_table_data(
         return None, None
 
 def fetch_certification_data_internal(conn: pyodbc.Connection):
-    return fetch_table_data(conn, "Dashboard_Certification_Date")
+    return fetch_table_data(conn, "Dashboard_Certification_Internal")
 
 def fetch_certification_data_external(conn: pyodbc.Connection):
     return fetch_table_data(conn, "Dashboard_Certification_Eksternal")
