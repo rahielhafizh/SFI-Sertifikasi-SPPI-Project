@@ -1,4 +1,3 @@
-
 from typing import List, Tuple, Dict
 from services.certification_utils import (
     build_email_header,
@@ -82,5 +81,43 @@ def format_combined_email_body(
             email_lines.append(format_pic_line(pic_name, pic_role, expired_date))
 
     email_lines.extend(build_email_footer())
+
+    return "\n".join(email_lines)
+
+
+from services.certification_utils import format_name_title_case, format_date_indonesian
+
+
+def format_mokas_email_body(
+    period_type: str, period_value: str, pic_list: List[Tuple], columns: List[str]
+) -> str:
+    column_indices = {col: idx for idx, col in enumerate(columns)}
+
+    email_lines = [
+        "Dear Bapak COO,",
+        "",
+        f"Dengan ini kami sampaikan daftar Pemilik Dealer Mokas yang berulang tahun pada {period_type} ({period_value}), dengan rincian sebagai berikut:",
+        "",
+    ]
+
+    for pic in pic_list:
+        nama_pemilik = format_name_title_case(pic[column_indices["NAMA_PEMILIK"]])
+        nama_dealer = format_name_title_case(pic[column_indices["NAMA_DEALER"]])
+        cabang = format_name_title_case(pic[column_indices["CABANG"]])
+        tanggal_lahir = format_date_indonesian(pic[column_indices["TANGGAL_LAHIR"]])
+        no_hp = pic[column_indices["NO_HP"]] if pic[column_indices["NO_HP"]] else "-"
+
+        email_lines.append(
+            f"👤 {nama_pemilik} - {nama_dealer} ({cabang})\t\t🎂 Tgl Lahir : {tanggal_lahir}\t\t📱 HP : {no_hp}"
+        )
+
+    email_lines.extend(
+        [
+            "",
+            "Mohon agar data tersebut dapat direview dan dikoordinasikan untuk pemberian greeting atau apresiasi kepada mitra dealer terkait.",
+            "",
+            "Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
+        ]
+    )
 
     return "\n".join(email_lines)

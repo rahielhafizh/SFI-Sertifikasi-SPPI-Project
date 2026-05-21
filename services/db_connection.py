@@ -1,6 +1,9 @@
 import pyodbc
+from typing import Optional
+from services.config import logger
 
-def get_database_connection():
+
+def get_database_connection() -> Optional[pyodbc.Connection]:
     try:
         conn = pyodbc.connect(
             "DRIVER={SQL Server};"
@@ -8,13 +11,14 @@ def get_database_connection():
             "DATABASE=SFI_DWH;"
             "UID=usersfi;"
             "PWD=sfi.100;",
-            timeout=5
+            timeout=5,
         )
-        print("[SYSTEM] CONNECTION SUCCESS.")
+        logger.info("[SYSTEM] DATABASE CONNECTION SUCCESS.")
         return conn
     except pyodbc.Error as e:
-        print(f"[ERROR] CONNECTION FAILED : {e}")
+        logger.error(f"[ERROR] DATABASE CONNECTION FAILED : {e}")
         return None
+
 
 if __name__ == "__main__":
     get_database_connection()
