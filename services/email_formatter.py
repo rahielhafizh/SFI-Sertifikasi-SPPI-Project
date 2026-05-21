@@ -1,123 +1,131 @@
-from typing import List, Tuple, Dict
-from services.certification_utils import (
-    build_email_header,
-    build_email_footer,
-    format_pic_line,
+import pyautogui
+from typing import List, Optional, Union
+
+# Dipertahankan karena ini eksternal dependency yang dipanggil di parent source code.
+from general_task import (
+    maximize_app_window,
+    creating_new_task,
+    blank_mail_space,
+    finish_outlook,
+    minimize_outlook,
+    confirm,
 )
+from services.config import load_config, wait_timer, logger
+from services.capslock_checker import capslock_checking
+from services.chrome_checker import open_outlook
+from services.certification_utils import get_email_subject
 
+CONFIG = load_config()
 
-def format_internal_email_body(
-    branch_name: str, branch_manager: str, pic_list: List[Tuple], columns: List[str]
-) -> str:
-    column_indices = {col: idx for idx, col in enumerate(columns)}
+def normalizing_recipients(recipients: Union[str, List[str], None]) -> List[str]:
+    if not recipients:
+        return []
+    if isinstance(recipients, str):
+        val = recipients.strip().lower()
+        return [val] if val else []
+    return [str(r).strip().lower() for r in recipients if r and str(r).strip()]
 
-    email_lines = build_email_header(branch_name, branch_manager)
-    email_lines.append("Daftar PIC Internal :")
+def write_recipients(recipient_list: List[str]) -> None:
+    for idx, recipient in enumerate(recipient_list):
+        pyautogui.write(recipient)
+        confirm()
+        if idx < len(recipient_list) - 1:
+            wait_timer(CONFIG["WAIT_TIME"]["TENTH_SECOND"])
 
-    for pic in pic_list:
-        pic_name = pic[column_indices["PIC_NAME"]]
-        job_title = pic[column_indices["JOB_TITLE_CODE"]]
-        expired_date = pic[column_indices["EXPIRED_DATE"]]
+def _execute_outlook_email_flow(subject: str, body: str, to_list: List[str], cc_list: List[str], minimize: bool) -> bool:
+    if not open_outlook():
+        logger.error("[ERROR] FAILED TO ACTIVATE OR LAUNCH OUTLOOK")
+        return False
 
-        email_lines.append(format_pic_line(pic_name, job_title, expired_date))
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    maximize_app_window()
+    capslock_checking()
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    email_lines.extend(build_email_footer())
+    try:
+        from general_task import handle_office
+        handle_office()
+    except Exception:
+        pass
 
-    return "\n".join(email_lines)
+    creating_new_task()
+    write_recipients(to_list)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
+    if cc_list:
+        write_recipients(cc_list)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-def format_external_email_body(
-    branch_name: str, branch_manager: str, pic_list: List[Tuple], columns: List[str]
-) -> str:
-    column_indices = {col: idx for idx, col in enumerate(columns)}
+    pyautogui.write(subject)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    email_lines = build_email_header(branch_name, branch_manager)
-    email_lines.append("Daftar PIC Eksternal :")
+    pyautogui.write(body)
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    blank_mail_space()
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    for pic in pic_list:
-        pic_name = pic[column_indices["PIC_NAME"]]
-        pic_role = pic[column_indices["PIC_ROLE"]]
-        expired_date = pic[column_indices["EXPIRED_DATE"]]
+    if minimize:
+        minimize_outlook()
+    else:
+        finish_outlook()
 
-        email_lines.append(format_pic_line(pic_name, pic_role, expired_date))
+    return True
 
-    email_lines.extend(build_email_footer())
-
-    return "\n".join(email_lines)
-
-
-def format_combined_email_body(
+def send_certification_email(
     branch_name: str,
     branch_manager: str,
-    internal_pic_list: List[Tuple],
-    external_pic_list: List[Tuple],
-    columns_internal: List[str],
-    columns_external: List[str],
-) -> str:
-    email_lines = build_email_header(branch_name, branch_manager)
-    if internal_pic_list and len(internal_pic_list) > 0:
-        email_lines.append("PIC Internal :")
-        column_indices_internal = {col: idx for idx, col in enumerate(columns_internal)}
+    bm_mail: str,
+    email_body: str,
+    minimize_after_send: bool = True,
+    cc_recipients: Optional[Union[str, List[str]]] = None,
+) -> bool:
+    primary_recipients = normalizing_recipients(bm_mail)
+    if not primary_recipients:
+        logger.error("[ERROR] PRIMARY RECIPIENT EMAIL (BM_MAIL) IS EMPTY")
+        return False
 
-        for pic in internal_pic_list:
-            pic_name = pic[column_indices_internal["PIC_NAME"]]
-            job_title = pic[column_indices_internal["JOB_TITLE_CODE"]]
-            expired_date = pic[column_indices_internal["EXPIRED_DATE"]]
+    logger.info(f"[SYSTEM] START CERTIFICATION EMAIL (BRANCH='{branch_name}', MANAGER='{branch_manager}', TO='{primary_recipients[0]}')")
 
-            email_lines.append(format_pic_line(pic_name, job_title, expired_date))
-
-    if external_pic_list and len(external_pic_list) > 0:
-        if internal_pic_list and len(internal_pic_list) > 0:
-            email_lines.append("")
-
-        email_lines.append("PIC Eksternal :")
-        column_indices_external = {col: idx for idx, col in enumerate(columns_external)}
-
-        for pic in external_pic_list:
-            pic_name = pic[column_indices_external["PIC_NAME"]]
-            pic_role = pic[column_indices_external["PIC_ROLE"]]
-            expired_date = pic[column_indices_external["EXPIRED_DATE"]]
-
-            email_lines.append(format_pic_line(pic_name, pic_role, expired_date))
-
-    email_lines.extend(build_email_footer())
-
-    return "\n".join(email_lines)
-
-
-from services.certification_utils import format_name_title_case, format_date_indonesian
-
-
-def format_mokas_email_body(
-    period_type: str, period_value: str, pic_list: List[Tuple], columns: List[str]
-) -> str:
-    column_indices = {col: idx for idx, col in enumerate(columns)}
-
-    email_lines = [
-        "Dear Bapak COO,",
-        "",
-        f"Dengan ini kami sampaikan daftar Pemilik Dealer Mokas yang berulang tahun pada {period_type} ({period_value}), dengan rincian sebagai berikut:",
-        "",
-    ]
-
-    for pic in pic_list:
-        nama_pemilik = format_name_title_case(pic[column_indices["NAMA_PEMILIK"]])
-        nama_dealer = format_name_title_case(pic[column_indices["NAMA_DEALER"]])
-        cabang = format_name_title_case(pic[column_indices["CABANG"]])
-        tanggal_lahir = format_date_indonesian(pic[column_indices["TANGGAL_LAHIR"]])
-        no_hp = pic[column_indices["NO_HP"]] if pic[column_indices["NO_HP"]] else "-"
-
-        email_lines.append(
-            f"👤 {nama_pemilik} - {nama_dealer} ({cabang})\t\t🎂 Tgl Lahir : {tanggal_lahir}\t\t📱 HP : {no_hp}"
-        )
-
-    email_lines.extend(
-        [
-            "",
-            "Mohon agar data tersebut dapat direview dan dikoordinasikan untuk pemberian greeting atau apresiasi kepada mitra dealer terkait.",
-            "",
-            "Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
-        ]
+    success = _execute_outlook_email_flow(
+        subject=get_email_subject(branch_name),
+        body=email_body,
+        to_list=primary_recipients,
+        cc_list=normalizing_recipients(cc_recipients),
+        minimize=minimize_after_send
     )
 
-    return "\n".join(email_lines)
+    if success:
+        logger.info(f"[SYSTEM] CERTIFICATION EMAIL SENT SUCCESSFULLY FOR BRANCH '{branch_name}'")
+    else:
+        logger.error(f"[ERROR] CERTIFICATION EMAIL SENDING FAILED FOR BRANCH '{branch_name}'")
+    return success
+
+def send_mokas_email(
+    target_email: str,
+    subject_email: str,
+    email_body: str,
+    minimize_after_send: bool = True,
+) -> bool:
+    primary_recipients = normalizing_recipients(target_email)
+    if not primary_recipients:
+        logger.error("[ERROR] TARGET EMAIL IS EMPTY")
+        return False
+
+    logger.info(f"[SYSTEM] START MOKAS EMAIL (TO='{primary_recipients[0]}')")
+
+    success = _execute_outlook_email_flow(
+        subject=subject_email,
+        body=email_body,
+        to_list=primary_recipients,
+        cc_list=[],
+        minimize=minimize_after_send
+    )
+
+    if success:
+        logger.info("[SYSTEM] MOKAS EMAIL SENT SUCCESSFULLY")
+    else:
+        logger.error("[ERROR] MOKAS EMAIL SENDING FAILED")
+    return success

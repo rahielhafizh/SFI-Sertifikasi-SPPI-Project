@@ -6,45 +6,35 @@ from services.config import (
     get_certification_filter_config,
     set_certification_filter_preset,
     get_month_id,
-    get_branch_order,
 )
 
 
 def parse_date(date_value: Any) -> Optional[datetime]:
-    if date_value is None:
+    if not date_value:
         return None
-
     if isinstance(date_value, datetime):
         return date_value
-
     if isinstance(date_value, str):
-        formats = ["%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"]
-        for fmt in formats:
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"):
             try:
-                return datetime.strptime(date_value, fmt)
+                return datetime.strptime(date_value.split(" ")[0], fmt)
             except ValueError:
                 continue
-
     return None
 
 
 def format_date_indonesian(date_value: Any) -> str:
     parsed_date = parse_date(date_value)
-
-    if parsed_date is None:
+    if not parsed_date:
         return str(date_value) if date_value else ""
 
-    day = parsed_date.day
-    month_english = parsed_date.strftime("%B")
-    year = parsed_date.year
-    month_indonesian = get_month_id(month_english, case="as-is")
-
-    return f"{day} {month_indonesian} {year}"
+    month_indonesian = get_month_id(parsed_date.strftime("%B"), case="as-is")
+    return f"{parsed_date.day} {month_indonesian} {parsed_date.year}"
 
 
 def format_name_title_case(name: Optional[str]) -> str:
     if not name or not isinstance(name, str):
-        return name
+        return name or ""
 
     special_cases = {
         "Pt": "PT",
@@ -62,7 +52,6 @@ def format_name_title_case(name: Optional[str]) -> str:
     }
 
     formatted = name.title()
-
     for incorrect, correct in special_cases.items():
         formatted = formatted.replace(incorrect, correct)
 
@@ -77,87 +66,29 @@ def filter_expiring_certifications(
     filtered_data = []
 
     filter_config = get_certification_filter_config()
-    filter_mode = filter_config["MODE"]
+    filter_mode = filter_config.get("MODE", "NEXT_MONTH")
 
-    if filter_mode == "NEXT_MONTH":
-        current_month = today.month
-        current_year = today.year
+    for row in rows:
+        expired_date = parse_date(row[column_indices.get(date_column, -1)])
+        if not expired_date:
+            continue
 
-        if current_month == 12:
-            next_month = 1
-            next_year = current_year + 1
-        else:
-            next_month = current_month + 1
-            next_year = current_year
-
-        for row in rows:
-            expired_date_value = row[column_indices[date_column]]
-            expired_date = parse_date(expired_date_value)
-
-            if (
-                expired_date
-                and expired_date.month == next_month
-                and expired_date.year == next_year
-            ):
+        if filter_mode == "NEXT_MONTH":
+            next_month = (today.month % 12) + 1
+            next_year = today.year + (1 if today.month == 12 else 0)
+            if expired_date.month == next_month and expired_date.year == next_year:
                 filtered_data.append(row)
 
-    elif filter_mode == "NEXT_N_MONTHS":
-        months_ahead = filter_config.get("MONTHS_AHEAD", 2)
+        elif filter_mode == "NEXT_N_MONTHS":
+            months_ahead = filter_config.get("MONTHS_AHEAD", 2)
+            for i in range(1, months_ahead + 1):
+                calc_month = ((today.month + i - 1) % 12) + 1
+                calc_year = today.year + ((today.month + i - 1) // 12)
+                if expired_date.month == calc_month and expired_date.year == calc_year:
+                    filtered_data.append(row)
+                    break
 
-        target_months = []
-        for i in range(1, months_ahead + 1):
-            calc_month = today.month + i
-            calc_year = today.year
-
-            while calc_month > 12:
-                calc_month -= 12
-                calc_year += 1
-
-            target_months.append((calc_month, calc_year))
-
-        for row in rows:
-            expired_date_value = row[column_indices[date_column]]
-            expired_date = parse_date(expired_date_value)
-
-            if expired_date:
-                for month, year in target_months:
-                    if expired_date.month == month and expired_date.year == year:
-                        filtered_data.append(row)
-                        break
-
-    elif filter_mode == "DAYS_RANGE":
-        days_ahead = filter_config.get("DAYS_AHEAD", 60)
-        end_date = today + timedelta(days=days_ahead)
-
-        for row in rows:
-            expired_date_value = row[column_indices[date_column]]
-            expired_date = parse_date(expired_date_value)
-
-            if expired_date and today <= expired_date <= end_date:
-                filtered_data.append(row)
-
-    elif filter_mode == "SPECIFIC_DATE_RANGE":
-        start_date = filter_config.get("START_DATE")
-        end_date = filter_config.get("END_DATE")
-
-        if start_date:
-            start_date = parse_date(start_date)
-        else:
-            start_date = today
-
-        if end_date:
-            end_date = parse_date(end_date)
-        else:
-            end_date = today + timedelta(days=30)
-
-        for row in rows:
-            expired_date_value = row[column_indices[date_column]]
-            expired_date = parse_date(expired_date_value)
-
-            if expired_date and start_date <= expired_date <= end_date:
-                filtered_data.append(row)
-
-    else:
+    if filter_mode not in ["NEXT_MONTH", "NEXT_N_MONTHS"]:
         logger.warning(
             f"[WARNING] UNKNOWN FILTER MODE : {filter_mode}, DEFAULTING TO NEXT_MONTH"
         )
@@ -170,11 +101,14 @@ def filter_expiring_certifications(
 def group_by_branch(
     columns: List[str], filtered_rows: List[Tuple], branch_column: str = "BRANCH_NAME"
 ) -> Dict[str, List[Tuple]]:
-    column_indices = {col: idx for idx, col in enumerate(columns)}
+    branch_idx = columns.index(branch_column) if branch_column in columns else -1
     branch_groups = defaultdict(list)
 
+    if branch_idx == -1:
+        return branch_groups
+
     for row in filtered_rows:
-        branch_name = row[column_indices[branch_column]]
+        branch_name = row[branch_idx]
         if branch_name:
             branch_groups[branch_name].append(row)
 
@@ -182,13 +116,10 @@ def group_by_branch(
 
 
 def build_email_header(branch_name: str, branch_manager: str) -> List[str]:
-    branch_name_formatted = format_name_title_case(branch_name)
-    branch_manager_formatted = format_name_title_case(branch_manager)
-
     return [
-        f"Dear Bapak {branch_manager_formatted},",
+        f"Dear Bapak {format_name_title_case(branch_manager)},",
         "",
-        f"Dengan ini kami sampaikan pemberitahuan terkait Tim Collection cabang {branch_name_formatted}.",
+        f"Dengan ini kami sampaikan pemberitahuan terkait Tim Collection cabang {format_name_title_case(branch_name)}.",
         "Berdasarkan data, terdapat PIC dengan masa berlaku Sertifikasi SPPI yang akan segera berakhir, dengan rincian sebagai berikut",
         "",
     ]
@@ -210,16 +141,11 @@ def build_email_footer() -> List[str]:
 
 
 def format_pic_line(pic_name: str, pic_role: str, expired_date: Any) -> str:
-
-    pic_name_formatted = format_name_title_case(pic_name)
-    expired_date_str = format_date_indonesian(expired_date)
-
-    return f"👨🏼 {pic_name_formatted} 🔰 {pic_role}\t\t📅  Masa Berlaku SPPI : {expired_date_str}"
+    return f"👨🏼 {format_name_title_case(pic_name)} 🔰 {pic_role}\t\t📅  Masa Berlaku SPPI : {format_date_indonesian(expired_date)}"
 
 
 def get_email_subject(branch_name: str) -> str:
-    branch_name_formatted = format_name_title_case(branch_name)
-    return f"Pemberitahuan Masa Berlaku Sertifikasi SPPI Tim Collection ({branch_name_formatted})"
+    return f"Pemberitahuan Masa Berlaku Sertifikasi SPPI Tim Collection ({format_name_title_case(branch_name)})"
 
 
 def extract_branch_manager_info(
@@ -230,8 +156,7 @@ def extract_branch_manager_info(
 ) -> Tuple[Optional[str], Optional[str]]:
     if not pic_list:
         return None, None
-
-    branch_manager = pic_list[0][column_indices[manager_column]]
-    bm_mail = pic_list[0][column_indices[email_column]]
-
-    return branch_manager, bm_mail
+    return (
+        pic_list[0][column_indices.get(manager_column, -1)],
+        pic_list[0][column_indices.get(email_column, -1)],
+    )

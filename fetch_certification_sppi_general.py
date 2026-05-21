@@ -72,7 +72,6 @@ def process_combined_certification_reminders(
 
             branch_manager, bm_mail = None, None
 
-            # Prioritize internal list for extracting BM Info, fallback to external
             if internal_pic_list:
                 branch_manager, bm_mail = extract_branch_manager_info(
                     internal_pic_list, column_indices_internal, "BRANCH_MANAGER", "BM_MAIL"

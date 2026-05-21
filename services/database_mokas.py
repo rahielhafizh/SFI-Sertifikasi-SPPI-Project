@@ -6,6 +6,7 @@ from services.config import logger
 def fetch_dealer_mokas_data(
     conn: pyodbc.Connection,
 ) -> Tuple[Optional[List[str]], Optional[List[Tuple]]]:
+    cursor = None
     try:
         cursor = conn.cursor()
         query = """
@@ -20,7 +21,6 @@ def fetch_dealer_mokas_data(
         columns = [column[0] for column in cursor.description]
         rows = cursor.fetchall()
 
-        cursor.close()
         logger.info(f"[DATABASE] FETCHED {len(rows)} ROWS FROM DEALER_MOKAS")
         return columns, rows
     except pyodbc.Error as e:
