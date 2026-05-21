@@ -9,11 +9,38 @@ pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0.1
 
 
+# ─── LOGGER FORMATTER ─────────────────────────────────────────────────────────
+class SafeColoredFormatter(ColoredFormatter):
+    FALLBACK_DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
+
+    def formatTime(
+        self, record: logging.LogRecord, datefmt: Optional[str] = None
+    ) -> str:
+        try:
+            return super().formatTime(record, datefmt)
+        except (UnicodeEncodeError, ValueError, OSError):
+            ct = self.converter(record.created)
+            return time.strftime(self.FALLBACK_DATE_FORMAT, ct)
+
+    def format(self, record: logging.LogRecord) -> str:
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            record.msg = record.msg.encode("ascii", errors="replace").decode("ascii")
+            record.args = ()
+            try:
+                return super().format(record)
+            except Exception:
+                return f"[LOG] {record.levelname}: {record.getMessage()}"
+
+
+# ─── LOGGER SETUP ─────────────────────────────────────────────────────────────
 def setup_logger() -> logging.Logger:
-    app_logger = logging.getLogger("SFI_SYSTEM")
-    app_logger.setLevel(logging.DEBUG)
-    if not app_logger.handlers:
-        formatter = ColoredFormatter(
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    if not logger.handlers:
+        formatter = SafeColoredFormatter(
             fmt=(
                 "\n"
                 "%(log_color)s[%(asctime)s] \n"
@@ -37,17 +64,37 @@ def setup_logger() -> logging.Logger:
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
         stream_handler.setFormatter(formatter)
-        app_logger.addHandler(stream_handler)
 
-    for log_name in [
-        "urllib3.connectionpool",
-        "urllib3.util.retry",
-        "requests",
-        "urllib3",
-    ]:
-        logging.getLogger(log_name).setLevel(logging.WARNING)
+        if hasattr(stream_handler.stream, "reconfigure"):
+            try:
+                stream_handler.stream.reconfigure(errors="replace")
+            except Exception:
+                pass
+        elif hasattr(stream_handler.stream, "buffer"):
+            try:
+                import io
 
-    return app_logger
+                stream_handler.stream = io.TextIOWrapper(
+                    stream_handler.stream.buffer,
+                    encoding="utf-8",
+                    errors="replace",
+                    line_buffering=True,
+                )
+            except Exception:
+                pass
+
+        logger.addHandler(stream_handler)
+
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+    logging.getLogger("urllib3.util.retry").setLevel(logging.WARNING)
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
+        logging.WARNING
+    )
+    logging.getLogger("requests.packages.urllib3.util.retry").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    return logger
 
 
 logger = setup_logger()

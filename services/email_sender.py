@@ -1,6 +1,7 @@
 import pyautogui
 from typing import List, Optional, Union
 
+# Dipertahankan karena ini eksternal dependency yang dipanggil di parent source code.
 from general_task import (
     maximize_app_window,
     creating_new_task,
@@ -14,26 +15,16 @@ from services.capslock_checker import capslock_checking
 from services.chrome_checker import open_outlook
 from services.certification_utils import get_email_subject
 
-
 CONFIG = load_config()
 
 
 def normalizing_recipients(recipients: Union[str, List[str], None]) -> List[str]:
-    if recipients is None:
+    if not recipients:
         return []
-
     if isinstance(recipients, str):
-        value = recipients.strip().lower()
-        return [value] if value else []
-
-    cleaned: List[str] = []
-    for r in recipients:
-        if not r:
-            continue
-        value = str(r).strip().lower()
-        if value:
-            cleaned.append(value)
-    return cleaned
+        val = recipients.strip().lower()
+        return [val] if val else []
+    return [str(r).strip().lower() for r in recipients if r and str(r).strip()]
 
 
 def write_recipients(recipient_list: List[str]) -> None:
@@ -44,6 +35,57 @@ def write_recipients(recipient_list: List[str]) -> None:
             wait_timer(CONFIG["WAIT_TIME"]["TENTH_SECOND"])
 
 
+def _execute_outlook_email_flow(
+    subject: str, body: str, to_list: List[str], cc_list: List[str], minimize: bool
+) -> bool:
+    if not open_outlook():
+        logger.error("[ERROR] FAILED TO ACTIVATE OR LAUNCH OUTLOOK")
+        return False
+
+    wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
+    maximize_app_window()
+    capslock_checking()
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+
+    try:
+        from general_task import handle_office  # type: ignore
+
+        handle_office()
+    except Exception:
+        pass
+
+    creating_new_task()
+
+    # To:
+    write_recipients(to_list)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+
+    # CC:
+    if cc_list:
+        write_recipients(cc_list)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+
+    # Subject:
+    pyautogui.write(subject)
+    pyautogui.press("tab")
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+
+    # Body:
+    pyautogui.write(body)
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    blank_mail_space()
+    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+
+    if minimize:
+        minimize_outlook()
+    else:
+        finish_outlook()
+
+    return True
+
+
 def send_certification_email(
     branch_name: str,
     branch_manager: str,
@@ -52,76 +94,32 @@ def send_certification_email(
     minimize_after_send: bool = True,
     cc_recipients: Optional[Union[str, List[str]]] = None,
 ) -> bool:
-    subject_email = get_email_subject(branch_name)
-
     primary_recipients = normalizing_recipients(bm_mail)
-    primary_log_email = primary_recipients[0] if primary_recipients else ""
+    if not primary_recipients:
+        logger.error("[ERROR] PRIMARY RECIPIENT EMAIL (BM_MAIL) IS EMPTY")
+        return False
 
     logger.info(
-        "[SYSTEM] START CERTIFICATION EMAIL "
-        f"(BRANCH='{branch_name}', MANAGER='{branch_manager}', TO='{primary_log_email}')"
+        f"[SYSTEM] START CERTIFICATION EMAIL (BRANCH='{branch_name}', MANAGER='{branch_manager}', TO='{primary_recipients[0]}')"
     )
 
-    try:
-        if not primary_recipients:
-            logger.error("[ERROR] PRIMARY RECIPIENT EMAIL (BM_MAIL) IS EMPTY")
-            return False
+    success = _execute_outlook_email_flow(
+        subject=get_email_subject(branch_name),
+        body=email_body,
+        to_list=primary_recipients,
+        cc_list=normalizing_recipients(cc_recipients),
+        minimize=minimize_after_send,
+    )
 
-        cc_list = normalizing_recipients(cc_recipients)
-
-        if not open_outlook():
-            logger.error("[ERROR] FAILED TO ACTIVATE OR LAUNCH OUTLOOK")
-            return False
-
-        wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
-        maximize_app_window()
-        capslock_checking()
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        try:
-            from general_task import handle_office  # type: ignore
-
-            handle_office()
-        except Exception:
-            pass
-
-        creating_new_task()
-
-        write_recipients(primary_recipients)
-
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        if cc_list:
-            write_recipients(cc_list)
-
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-        pyautogui.write(subject_email)
-
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        pyautogui.write(email_body)
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        blank_mail_space()
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        if minimize_after_send:
-            minimize_outlook()
-        else:
-            finish_outlook()
-
+    if success:
         logger.info(
-            "[SYSTEM] CERTIFICATION EMAIL SENT SUCCESSFULLY "
-            f"FOR BRANCH '{branch_name}'"
+            f"[SYSTEM] CERTIFICATION EMAIL SENT SUCCESSFULLY FOR BRANCH '{branch_name}'"
         )
-        return True
-
-    except Exception as e:
-        logger.error(f"[ERROR] CERTIFICATION EMAIL SENDING FAILED : {e}")
-        return False
+    else:
+        logger.error(
+            f"[ERROR] CERTIFICATION EMAIL SENDING FAILED FOR BRANCH '{branch_name}'"
+        )
+    return success
 
 
 def send_mokas_email(
@@ -131,61 +129,22 @@ def send_mokas_email(
     minimize_after_send: bool = True,
 ) -> bool:
     primary_recipients = normalizing_recipients(target_email)
-    primary_log_email = primary_recipients[0] if primary_recipients else ""
-
-    logger.info(f"[SYSTEM] START MOKAS EMAIL (TO='{primary_log_email}')")
-
-    try:
-        if not primary_recipients:
-            logger.error("[ERROR] TARGET EMAIL IS EMPTY")
-            return False
-
-        if not open_outlook():
-            logger.error("[ERROR] FAILED TO ACTIVATE OR LAUNCH OUTLOOK")
-            return False
-
-        wait_timer(CONFIG["WAIT_TIME"]["FIVE_SECOND"])
-        maximize_app_window()
-        capslock_checking()
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        try:
-            from general_task import handle_office  # type: ignore
-
-            handle_office()
-        except Exception:
-            pass
-
-        creating_new_task()
-
-        write_recipients(primary_recipients)
-
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        # Melewati field CC
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        pyautogui.write(subject_email)
-
-        pyautogui.press("tab")
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        pyautogui.write(email_body)
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        blank_mail_space()
-        wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-        if minimize_after_send:
-            minimize_outlook()
-        else:
-            finish_outlook()
-
-        logger.info("[SYSTEM] MOKAS EMAIL SENT SUCCESSFULLY")
-        return True
-
-    except Exception as e:
-        logger.error(f"[ERROR] MOKAS EMAIL SENDING FAILED : {e}")
+    if not primary_recipients:
+        logger.error("[ERROR] TARGET EMAIL IS EMPTY")
         return False
+
+    logger.info(f"[SYSTEM] START MOKAS EMAIL (TO='{primary_recipients[0]}')")
+
+    success = _execute_outlook_email_flow(
+        subject=subject_email,
+        body=email_body,
+        to_list=primary_recipients,
+        cc_list=[],  # Mokas tidak pakai CC di behavior existing
+        minimize=minimize_after_send,
+    )
+
+    if success:
+        logger.info("[SYSTEM] MOKAS EMAIL SENT SUCCESSFULLY")
+    else:
+        logger.error("[ERROR] MOKAS EMAIL SENDING FAILED")
+    return success
