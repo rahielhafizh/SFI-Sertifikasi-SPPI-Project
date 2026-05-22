@@ -1,18 +1,16 @@
 from typing import Optional
-
 from services.db_connection import get_database_connection
+from services.sppi_formatter import format_external_email_body
 from services.email_sender import send_certification_email
-from services.email_formatter import format_external_email_body
+from services.database_sppi import fetch_certification_data_external
 from services.config import (
     load_config,
     wait_timer,
     logger,
     get_branch_order,
-    get_certification_filter_config,
     set_certification_filter_preset,
 )
-from services.database_queries import fetch_certification_data_external
-from services.certification_utils import (
+from services.sppi_utils import (
     filter_expiring_certifications,
     group_by_branch,
     extract_branch_manager_info,
@@ -20,11 +18,14 @@ from services.certification_utils import (
 
 CONFIG = load_config()
 
+
 def process_external_certification_reminders(
     filter_preset: Optional[str] = None, minimize_after_send: bool = True
 ) -> bool:
     if filter_preset and not set_certification_filter_preset(filter_preset):
-        logger.error(f"[ERROR] FAILED TO SET FILTER PRESET : {filter_preset}, USING DEFAULT")
+        logger.error(
+            f"[ERROR] FAILED TO SET FILTER PRESET : {filter_preset}, USING DEFAULT"
+        )
 
     conn = get_database_connection()
     if not conn:
@@ -44,7 +45,9 @@ def process_external_certification_reminders(
             return False
 
         filtered_rows = filter_expiring_certifications(columns, rows, "EXPIRED_DATE")
-        logger.info(f"[SYSTEM] FILTERED {len(filtered_rows)} ROWS BASED ON ACTIVE FILTER")
+        logger.info(
+            f"[SYSTEM] FILTERED {len(filtered_rows)} ROWS BASED ON ACTIVE FILTER"
+        )
 
         if not filtered_rows:
             logger.info("[SYSTEM] NO EXPIRING CERTIFICATIONS FOUND")
@@ -52,7 +55,7 @@ def process_external_certification_reminders(
 
         branch_groups = group_by_branch(columns, filtered_rows, "BRANCH")
         logger.info(f"[SYSTEM] GROUPED DATA INTO {len(branch_groups)} BRANCHES")
-        
+
         column_indices = {col: idx for idx, col in enumerate(columns)}
         branch_order = get_branch_order()
         processed_count, failed_count = 0, 0
@@ -67,7 +70,9 @@ def process_external_certification_reminders(
             )
 
             if not branch_manager or not bm_mail:
-                logger.warning(f"[WARNING] MISSING BRANCH MANAGER INFO FOR {branch_name}, SKIPPING")
+                logger.warning(
+                    f"[WARNING] MISSING BRANCH MANAGER INFO FOR {branch_name}, SKIPPING"
+                )
                 failed_count += 1
                 continue
 
@@ -99,6 +104,7 @@ def process_external_certification_reminders(
     finally:
         conn.close()
         logger.info("[SYSTEM] DATABASE CONNECTION CLOSED")
+
 
 if __name__ == "__main__":
     process_external_certification_reminders()

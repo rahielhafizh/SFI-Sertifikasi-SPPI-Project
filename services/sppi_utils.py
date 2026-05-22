@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 from collections import defaultdict
 from services.config import (
@@ -14,6 +14,8 @@ def parse_date(date_value: Any) -> Optional[datetime]:
         return None
     if isinstance(date_value, datetime):
         return date_value
+    if isinstance(date_value, date):
+        return datetime(date_value.year, date_value.month, date_value.day)
     if isinstance(date_value, str):
         for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"):
             try:
@@ -89,9 +91,6 @@ def filter_expiring_certifications(
                     break
 
     if filter_mode not in ["NEXT_MONTH", "NEXT_N_MONTHS"]:
-        logger.warning(
-            f"[WARNING] UNKNOWN FILTER MODE : {filter_mode}, DEFAULTING TO NEXT_MONTH"
-        )
         set_certification_filter_preset("NEXT_MONTH")
         return filter_expiring_certifications(columns, rows, date_column)
 
@@ -127,21 +126,19 @@ def build_email_header(branch_name: str, branch_manager: str) -> List[str]:
 
 def build_email_footer() -> List[str]:
     return [
-        "",
-        "Sehubungan dengan hal tersebut, mohon agar dapat berkoordinasi dengan Divisi HR untuk penjadwalan Ujian Sertifikasi Penagihan.",
-        "Jangan sampai terdapat petugas lapangan yang melakukan penagihan tanpa memiliki sertifikasi yang masih aktif atau dalam kondisi kedaluwarsa (expired).",
+        "Sehubungan dengan hal tersebut, mohon agar dapat berkoordinasi dengan Divisi HR untuk penjadwalan Ujian Sertifikasi Penagihan. Jangan sampai terdapat petugas lapangan yang melakukan penagihan tanpa memiliki sertifikasi yang masih aktif atau dalam kondisi kedaluwarsa (expired).",
         "",
         "Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
         "",
         "",
         "Hormat kami,",
         "Asset Management Division.",
-        "Collection HO – PT Suzuki Finance Indonesia.",
+        "Collection HO  PT Suzuki Finance Indonesia.",
     ]
 
 
 def format_pic_line(pic_name: str, pic_role: str, expired_date: Any) -> str:
-    return f"👨🏼 {format_name_title_case(pic_name)} 🔰 {pic_role}\t\t📅  Masa Berlaku SPPI : {format_date_indonesian(expired_date)}"
+    return f"👮 {format_name_title_case(pic_name)}  💼 {pic_role}\n📅 Masa Berlaku SPPI : {format_date_indonesian(expired_date)}\n"
 
 
 def get_email_subject(branch_name: str) -> str:

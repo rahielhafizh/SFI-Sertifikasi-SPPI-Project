@@ -1,7 +1,7 @@
 import pyautogui
+import pyperclip
 from typing import List, Optional, Union
 
-# Dipertahankan karena ini eksternal dependency yang dipanggil di parent source code.
 from general_task import (
     maximize_app_window,
     creating_new_task,
@@ -10,10 +10,16 @@ from general_task import (
     minimize_outlook,
     confirm,
 )
-from services.config import load_config, wait_timer, logger
+from services.config import (
+    load_config,
+    wait_timer,
+    logger,
+    DEFAULT_CC_SPPI,
+    DEFAULT_CC_MOKAS,
+)
 from services.capslock_checker import capslock_checking
 from services.chrome_checker import open_outlook
-from services.certification_utils import get_email_subject
+from services.sppi_utils import get_email_subject
 
 CONFIG = load_config()
 
@@ -35,7 +41,7 @@ def write_recipients(recipient_list: List[str]) -> None:
             wait_timer(CONFIG["WAIT_TIME"]["TENTH_SECOND"])
 
 
-def _execute_outlook_email_flow(
+def outlook_email_flow(
     subject: str, body: str, to_list: List[str], cc_list: List[str], minimize: bool
 ) -> bool:
     if not open_outlook():
@@ -46,42 +52,37 @@ def _execute_outlook_email_flow(
     maximize_app_window()
     capslock_checking()
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
-
-    try:
-        from general_task import handle_office  # type: ignore
-
-        handle_office()
-    except Exception:
-        pass
-
     creating_new_task()
 
-    # To:
     write_recipients(to_list)
     pyautogui.press("tab")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    # CC:
     if cc_list:
         write_recipients(cc_list)
     pyautogui.press("tab")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    # Subject:
     pyautogui.write(subject)
     pyautogui.press("tab")
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    # Body:
-    pyautogui.write(body)
+    try:
+        pyperclip.copy(body)
+        pyautogui.hotkey("ctrl", "v")
+        logger.info("[SYSTEM] EMAIL BODY PASTED FROM CLIPBOARD SUCCESSFULLY")
+    except Exception as e:
+        logger.error(f"[ERROR] FAILED TO PASTE EMAIL BODY : {e}")
+        return False
+
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
     blank_mail_space()
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    if minimize:
-        minimize_outlook()
-    else:
-        finish_outlook()
+    # if minimize:
+    #     minimize_outlook()
+    # else:
+    #     finish_outlook()
 
     return True
 
@@ -99,15 +100,21 @@ def send_certification_email(
         logger.error("[ERROR] PRIMARY RECIPIENT EMAIL (BM_MAIL) IS EMPTY")
         return False
 
+    final_cc_list = normalizing_recipients(DEFAULT_CC_SPPI)
+    if cc_recipients:
+        for cc in normalizing_recipients(cc_recipients):
+            if cc not in final_cc_list:
+                final_cc_list.append(cc)
+
     logger.info(
         f"[SYSTEM] START CERTIFICATION EMAIL (BRANCH='{branch_name}', MANAGER='{branch_manager}', TO='{primary_recipients[0]}')"
     )
 
-    success = _execute_outlook_email_flow(
+    success = outlook_email_flow(
         subject=get_email_subject(branch_name),
         body=email_body,
         to_list=primary_recipients,
-        cc_list=normalizing_recipients(cc_recipients),
+        cc_list=final_cc_list,
         minimize=minimize_after_send,
     )
 
@@ -126,6 +133,7 @@ def send_mokas_email(
     target_email: str,
     subject_email: str,
     email_body: str,
+    cc_recipients: Optional[Union[str, List[str]]] = None,
     minimize_after_send: bool = True,
 ) -> bool:
     primary_recipients = normalizing_recipients(target_email)
@@ -135,11 +143,17 @@ def send_mokas_email(
 
     logger.info(f"[SYSTEM] START MOKAS EMAIL (TO='{primary_recipients[0]}')")
 
-    success = _execute_outlook_email_flow(
+    final_cc_list = normalizing_recipients(DEFAULT_CC_MOKAS)
+    if cc_recipients:
+        for cc in normalizing_recipients(cc_recipients):
+            if cc not in final_cc_list:
+                final_cc_list.append(cc)
+
+    success = outlook_email_flow(
         subject=subject_email,
         body=email_body,
         to_list=primary_recipients,
-        cc_list=[],  # Mokas tidak pakai CC di behavior existing
+        cc_list=final_cc_list,
         minimize=minimize_after_send,
     )
 

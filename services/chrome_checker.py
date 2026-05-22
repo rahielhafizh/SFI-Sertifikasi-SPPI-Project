@@ -1,19 +1,18 @@
-import os
-import time
 import ctypes
-import subprocess
-import pyautogui
+import os
 import psutil
-import win32gui
-import win32con
+import pyautogui
+import subprocess
+import time
 import win32api
+import win32con
+import win32gui
 import win32process
-from typing import Optional, List
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
 from ctypes import wintypes
-from services.config import load_config, wait_timer, logger
+from enum import Enum
+from services.config import load_config, logger, wait_timer
+from typing import List, Optional
 
 CONFIG = load_config()
 SPI_GETFOREGROUNDLOCKTIMEOUT = 0x2000
@@ -28,7 +27,8 @@ class WindowState(Enum):
     HIDDEN = win32con.SW_HIDE
 
 
-def running_process_checker(process_name: str) -> bool:
+# CHECK WHETHER A PROCESS IS RUNNING BY NAME
+def is_process_running(process_name: str) -> bool:
     try:
         for p in psutil.process_iter(attrs=["name"]):
             name = p.info.get("name") or ""
@@ -40,7 +40,8 @@ def running_process_checker(process_name: str) -> bool:
         return False
 
 
-def window_foreground_waiter(hwnd: int, timeout: float = 5.0) -> bool:
+# WAIT UNTIL THE GIVEN HWND BECOMES THE FOREGROUND WINDOW
+def wait_until_window_foreground(hwnd: int, timeout: float = 5.0) -> bool:
     start = time.time()
     while time.time() - start < timeout:
         try:
@@ -52,7 +53,8 @@ def window_foreground_waiter(hwnd: int, timeout: float = 5.0) -> bool:
     return False
 
 
-def window_checker(
+# FIND THE MAIN VISIBLE WINDOW FOR A PROCESS MATCHING FILTERS
+def find_main_window(
     process_name: str,
     class_filter: Optional[str] = None,
     title_filter: Optional[str] = None,
@@ -70,6 +72,7 @@ def window_checker(
             class_name = (win32gui.GetClassName(hwnd) or "").lower()
             title = win32gui.GetWindowText(hwnd) or ""
 
+            # MATCH PROCESS NAME AND OPTIONAL FILTERS
             if process_name.lower() in proc_name:
                 if class_filter and class_filter.lower() not in class_name:
                     return True
@@ -77,6 +80,7 @@ def window_checker(
                     return True
                 result.append((hwnd, len(title)))
 
+        # IGNORE WINDOWS WE CANNOT ACCESS (SYSTEM/PRIVILEGE ISSUES)
         except Exception:
             pass
         return True
@@ -88,15 +92,17 @@ def window_checker(
     return None
 
 
+# ABSTRACT STRATEGY FOR ACTIVATING A WINDOW
 class WindowActivationStrategy(ABC):
     @abstractmethod
     def activate(self, hwnd: int) -> bool:
         pass
 
 
+# ATTACH THREAD INPUT STRATEGY
 class ThreadAttachStrategy(WindowActivationStrategy):
-
     def activate(self, hwnd: int) -> bool:
+        # ATTEMPT TO ATTACH THREAD INPUT AND SET FOREGROUND
         current = win32api.GetCurrentThreadId()
         foreground = win32gui.GetForegroundWindow()
         if not foreground or hwnd == foreground:
@@ -110,6 +116,8 @@ class ThreadAttachStrategy(WindowActivationStrategy):
         try:
             foreground_thread = win32process.GetWindowThreadProcessId(foreground)[0]
             target_thread = win32process.GetWindowThreadProcessId(hwnd)[0]
+
+            # ATTACH AND ENSURE WE ALWAYS DETACH
             win32process.AttachThreadInput(current, foreground_thread, True)
             win32process.AttachThreadInput(target_thread, foreground_thread, True)
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
@@ -121,6 +129,7 @@ class ThreadAttachStrategy(WindowActivationStrategy):
             except Exception:
                 success = False
 
+            # ALWAYS DETACH THREAD INPUT
             finally:
                 try:
                     win32process.AttachThreadInput(
@@ -139,6 +148,7 @@ class ThreadAttachStrategy(WindowActivationStrategy):
             return False
 
 
+# FORCE ACTIVATE BY SHOWING, BRINGING TO TOP AND SETTING FOREGROUND
 class ForceActivateStrategy(WindowActivationStrategy):
     def activate(self, hwnd: int) -> bool:
         try:
@@ -151,17 +161,24 @@ class ForceActivateStrategy(WindowActivationStrategy):
             return False
 
 
+# BYPASS FOREGROUND LOCK TIMEOUT USING SYSTEM PARAMETERS
 class TimeoutBypassStrategy(WindowActivationStrategy):
     def activate(self, hwnd: int) -> bool:
         try:
             user32 = ctypes.windll.user32
             timeout = wintypes.UINT()
+
+            # READ CURRENT VALUE
             user32.SystemParametersInfoW(
                 SPI_GETFOREGROUNDLOCKTIMEOUT, 0, ctypes.byref(timeout), 0
             )
+
+            # SET TO ZERO TO ALLOW SETFOREGROUND
             user32.SystemParametersInfoW(
                 SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDWININICHANGE
             )
+
+            # RESTORE ORIGINAL VALUE
             try:
                 win32gui.SetForegroundWindow(hwnd)
             finally:
@@ -178,8 +195,9 @@ class TimeoutBypassStrategy(WindowActivationStrategy):
             return False
 
 
+# CONTROLLER THAT TRIES STRATEGIES IN ORDER
 class WindowController:
-
+    # STRATEGIES ORDERED FROM LEAST INTRUSIVE TO MOST
     def __init__(self):
         self.strategies: List[WindowActivationStrategy] = [
             ThreadAttachStrategy(),
@@ -191,13 +209,13 @@ class WindowController:
         for strategy in self.strategies:
             try:
                 if strategy.activate(hwnd):
-                    if window_foreground_waiter(
+                    if wait_until_window_foreground(
                         hwnd,
                         timeout=(
-                            CONFIG["WAIT_TIME"]["TEN_SECOND"]
+                            CONFIG["WAIT_TIME"]["FIVE_SECOND"]
                             if "WAIT_TIME" in CONFIG
-                            and "TEN_SECOND" in CONFIG["WAIT_TIME"]
-                            else 5
+                            and "FIVE_SECOND" in CONFIG["WAIT_TIME"]
+                            else 5.0
                         ),
                     ):
                         logger.info("[WINDOW] ACTIVATION SUCCESS")
@@ -211,10 +229,10 @@ class WindowController:
         try:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
             placement = win32gui.GetWindowPlacement(hwnd)
-
+            # INDEX 1 IS SHOWCMD
             if placement[1] == win32con.SW_SHOWMAXIMIZED:
                 return True
-
+            # FALLBACK TO KEYBOARD SHORTCUT
             pyautogui.hotkey("win", "up")
             placement = win32gui.GetWindowPlacement(hwnd)
             return placement[1] == win32con.SW_SHOWMAXIMIZED
@@ -223,29 +241,32 @@ class WindowController:
             return False
 
 
+# BASE CLASS FOR APPLICATION MANAGERS
 class BaseAppManager(ABC):
-
+    # INITIALISE MANAGER WITH NAME, PATH AND CONTROLLER
     def __init__(self, name: str, path: str):
         self.name = name
         self.path = path
         self.controller = WindowController()
 
-    def running_process_result(self) -> bool:
-        return running_process_checker(self.name)
+    def is_running(self) -> bool:
+        return is_process_running(self.name)
 
-    def validate_executer(self) -> None:
+    def validate_executable(self) -> None:
         if not os.path.exists(self.path):
-            raise FileNotFoundError(f"EXEC NOT FOUND : {self.path}")
+            raise FileNotFoundError(f"Executable not found: {self.path}")
 
+    # OPEN OR RESTORE APPLICATION AND ENSURE IT IS MAXIMISED
     def open(self) -> bool:
-        if self.running_process_result():
+        if self.is_running():
             logger.info(f"[SYSTEM] RESTORING {self.name.upper()}")
-            hwnd = self.window_checker()
+            hwnd = self.find_main_window()
             if hwnd:
                 return self.controller.activate(hwnd) and self.controller.maximize(hwnd)
 
+        # LAUNCH APPLICATION IF NOT RUNNING
         logger.info(f"[SYSTEM] LAUNCHING {self.name.upper()}")
-        self.validate_executer()
+        self.validate_executable()
         try:
             self.launch()
         except Exception as e:
@@ -253,14 +274,16 @@ class BaseAppManager(ABC):
             return False
 
         wait_timer(CONFIG["WAIT_TIME"]["TEN_SECOND"])
-        hwnd = self.window_checker()
+        hwnd = self.find_main_window()
         if hwnd:
             return self.controller.activate(hwnd) and self.controller.maximize(hwnd)
-        logger.error(f"[SYSTEM] NOT FIND {self.name.upper()} AFTER LAUNCH")
+        logger.error(
+            f"[SYSTEM] COULD NOT FIND MAIN WINDOW FOR {self.name.upper()} AFTER LAUNCH"
+        )
         return False
 
     @abstractmethod
-    def window_checker(self) -> Optional[int]:
+    def find_main_window(self) -> Optional[int]:
         pass
 
     @abstractmethod
@@ -268,72 +291,80 @@ class BaseAppManager(ABC):
         pass
 
 
+# CHROME MANAGER
 class ChromeManager(BaseAppManager):
     def __init__(self, path: str):
         super().__init__("chrome", path)
 
-    def window_checker(self) -> Optional[int]:
-        return window_checker("chrome", class_filter="chrome")
+    def find_main_window(self) -> Optional[int]:
+        return find_main_window("chrome", class_filter="chrome")
 
+    # USE LIST-STYLE POPEN TO AVOID SHELL
     def launch(self) -> None:
-        os.startfile(self.path)
+        subprocess.Popen([self.path])
 
 
+# OUTLOOK MANAGER
 class OutlookManager(BaseAppManager):
     def __init__(self, path: str):
         super().__init__("outlook", path)
 
-    def window_checker(self) -> Optional[int]:
-        return window_checker("outlook", class_filter="rctrl_renwnd32")
+    def find_main_window(self) -> Optional[int]:
+        return find_main_window("outlook", class_filter="rctrl_renwnd32")
 
+    # USE OS STARTFILE FOR REGISTERED PROTOCOLS/FILES
     def launch(self) -> None:
         os.startfile(self.path)
 
+    # SEND KEY COMMANDS TO OUTLOOK WHEN ITS WINDOW IS ACTIVE
     def send_command(self, keys, desc: str = "") -> bool:
-        hwnd = self.window_checker()
+        hwnd = self.find_main_window()
         if hwnd and self.controller.activate(hwnd):
-            wait_timer(CONFIG["WAIT_TIME"]["THREE_SECOND"])
+            wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
             try:
                 if isinstance(keys, list):
                     pyautogui.hotkey(*keys)
                 else:
                     pyautogui.press(keys)
-                logger.info(f"[SYSTEM] SENT OUTLOOK COMMAND : {desc}")
+                logger.info(f"[SYSTEM] SENT OUTLOOK COMMAND: {desc}")
                 return True
             except Exception as e:
-                logger.error(f"[SYSTEM] FAILED TO SEND OUTLOOK COMMAND : {e}")
+                logger.error(f"[SYSTEM] FAILED TO SEND OUTLOOK COMMAND: {e}")
         return False
 
 
-def chrome_manager() -> ChromeManager:
+# MAIN FUNCTIONS
+def create_chrome_manager() -> ChromeManager:
     return ChromeManager(CONFIG["CHROME_PATH"])
 
 
-def outlook_manager() -> OutlookManager:
+def create_outlook_manager() -> OutlookManager:
     return OutlookManager(CONFIG["OUTLOOK_PATH"])
 
 
 def open_chrome() -> bool:
-    return chrome_manager().open()
+    return create_chrome_manager().open()
 
 
 def open_outlook() -> bool:
-    return outlook_manager().open()
+    return create_outlook_manager().open()
 
 
 def send_outlook_command(keys, desc: str = "") -> bool:
-    return outlook_manager().send_command(keys, desc)
+    return create_outlook_manager().send_command(keys, desc)
 
 
 def check_chrome_status() -> bool:
-    return running_process_checker("chrome")
+    return is_process_running("chrome")
 
 
-def check_outlook_status() -> bool:
-    return running_process_checker("outlook")
+def is_outlook_running() -> bool:
+    return is_process_running("outlook")
 
 
 if __name__ == "__main__":
+    logger.info("LAUNCHING CHROME")
     open_chrome()
-    wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
+    wait_timer(CONFIG["WAIT_TIME"]["TWO_SECOND"])
+    logger.info("LAUNCHING OUTLOOK")
     open_outlook()

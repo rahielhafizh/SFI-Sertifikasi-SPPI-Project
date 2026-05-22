@@ -99,8 +99,17 @@ def setup_logger() -> logging.Logger:
 
 logger = setup_logger()
 
+DEFAULT_CC_SPPI = [
+    "agnes.tri@sfi.co.id",
+    "swacita.apriyanti@sfi.co.id",
+    "ardi.supriyono@sfi.co.id",
+]
+
+
+DEFAULT_CC_MOKAS = ["brian.yektibudi@sfi.co.id"]
+
 APPLICATION_PATHS = {
-    "OUTLOOK_PATH": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office 2013\\Outlook 2013.lnk",
+    "OUTLOOK_PATH": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office\\Outlook 2013.lnk",
 }
 
 WAIT_TIMES = {
