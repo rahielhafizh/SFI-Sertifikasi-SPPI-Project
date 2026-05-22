@@ -12,7 +12,7 @@ def _build_mokas_header() -> List[str]:
 
 def _build_mokas_footer() -> List[str]:
     return [
-        "Mohon agar data tersebut dapat ditinjau kembali guna koordinasi pemberian apresiasi kepada pihak terkait.",
+        "Diharapkan agar data tersebut dapat ditinjau kembali guna koordinasi pemberian apresiasi kepada pihak terkait.",
         "",
         "Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
         "",
@@ -26,22 +26,50 @@ def _build_pic_lines(rows: List[Tuple], columns: List[str]) -> List[str]:
     lines = []
 
     for pic in rows:
-        nama = format_name_title_case(pic[col_idx["NAMA_PEMILIK"]])
+        nama = format_name_title_case(pic[col_idx["NAMA_MITRA"]])
         dealer = format_name_title_case(pic[col_idx["NAMA_DEALER"]])
-        kota_raw = (
-            pic[col_idx["KOTA"]]
-            if "KOTA" in col_idx and pic[col_idx["KOTA"]]
-            else pic[col_idx["CABANG"]]
-        )
-        lokasi = format_name_title_case(kota_raw)
+        cabang = format_name_title_case(pic[col_idx["MAPPING_CABANG"]])
         tgl_lahir = format_date_indonesian(pic[col_idx["TANGGAL_LAHIR"]])
-        no_hp = pic[col_idx["NO_HP"]] or "-"
+        no_hp = pic[col_idx["NO_MITRA"]] or "-"
 
-        lines.append(f"Nama Pemilik : {nama} (Dealer {dealer} - Kota {lokasi})")
+        lines.append(f"Nama : {nama} (Dealer {dealer} - Cabang {cabang})")
         lines.append(f"Tanggal Lahir : {tgl_lahir} | No. HP : {no_hp}")
         lines.append("")
 
     return lines
+
+
+def format_mokas_whatsapp_body(
+    recipient_name: str,
+    recipient_role: str,
+    rows: List[Tuple],
+    columns: List[str],
+    check_today_birthdays: bool,
+    today_date_str: str,
+) -> str:
+    lines = [f"Reminder untuk Bapak {recipient_name} selaku {recipient_role}", ""]
+
+    if check_today_birthdays:
+        lines.extend(
+            [
+                f"Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun pada hari ini ({today_date_str}) :",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun.",
+                "",
+                f"Adapun untuk hari ini ({today_date_str}), tidak terdapat mitra dealer yang berulang tahun, "
+                "dan mitra dealer yang berulang tahun pada tanggal terdekat adalah sebagai berikut :",
+                "",
+            ]
+        )
+
+    lines.extend(_build_pic_lines(rows, columns))
+    lines.extend(_build_mokas_footer())
+    return "\n".join(lines)
 
 
 def format_mokas_daily_email_body(
@@ -55,16 +83,14 @@ def format_mokas_daily_email_body(
     if check_today_birthdays:
         lines.extend(
             [
-                f"Berikut kami lampirkan daftar pemilik Dealer Mobil Bekas yang berulang tahun pada hari ini ({today_date_str}) dan tanggal terdekat selanjutnya.",
-                "",
-                "Terlampir rincian data mitra terkait adalah sebagai berikut:",
+                f"Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun pada hari ini ({today_date_str}) :",
                 "",
             ]
         )
     else:
         lines.extend(
             [
-                "Berikut kami lampirkan daftar pemilik Dealer Mobil Bekas yang berulang tahun.",
+                "Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun.",
                 "",
                 f"Adapun untuk hari ini ({today_date_str}), tidak terdapat mitra dealer yang berulang tahun, "
                 "dan mitra dealer yang berulang tahun pada tanggal terdekat adalah sebagai berikut :",
@@ -85,7 +111,7 @@ def format_mokas_weekly_email_body(
     lines = _build_mokas_header()
     lines.extend(
         [
-            f"Berikut terlampir daftar pemilik Dealer Mobil Bekas yang berulang tahun pada minggu ini ({period_value}).",
+            f"Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun pada minggu ini ({period_value}).",
             "",
             "Adapun rincian data mitra terkait adalah sebagai berikut:",
             "",
@@ -104,7 +130,7 @@ def format_mokas_monthly_email_body(
     lines = _build_mokas_header()
     lines.extend(
         [
-            f"Berikut terlampir daftar pemilik Dealer Mobil Bekas yang berulang tahun pada bulan ini ({period_value}).",
+            f"Berikut kami informasikan daftar pemilik Dealer Mobil Bekas yang berulang tahun pada bulan ini ({period_value}).",
             "",
             "Adapun rincian data mitra terkait adalah sebagai berikut:",
             "",

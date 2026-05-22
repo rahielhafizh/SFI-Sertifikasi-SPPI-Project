@@ -39,6 +39,7 @@ def get_mokas_birthdays_daily(minimize_after_send: bool = True) -> bool:
         sorted_rows = sort_by_birth_date(columns, filtered_rows)
         today = datetime.now()
         birth_date_idx = columns.index("TANGGAL_LAHIR")
+
         check_today_birthdays = any(
             (d := parse_date(row[birth_date_idx])) is not None
             and d.month == today.month

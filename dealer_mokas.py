@@ -251,7 +251,7 @@ def main() -> None:
 
     os.makedirs(DEST_DIR, exist_ok=True)
 
-    print("[*] Memuat Workbook Excel...")
+    print("Processing Workbook")
     wb = load_workbook(SRC_PATH)
 
     if SHEET_NAME not in wb.sheetnames:

@@ -9,12 +9,14 @@ def fetch_dealer_mokas_data(
     cursor = None
     try:
         cursor = conn.cursor()
+        # Query disesuaikan dengan struktur dan nama field tabel DEALER_MOKAS terbaru
         query = """
             SELECT 
                 DEALER_MOKAS_ID, AREA, CABANG, NAMA_DEALER, 
-                NAMA_PEMILIK, NO_HP, KOTA, TANGGAL_LAHIR, ALAMAT 
+                NAMA_MITRA, NO_MITRA, KOTA, TANGGAL_LAHIR, ALAMAT,
+                MAPPING_AREA, MAPPING_CABANG, NAMA_BM, NO_BM, NAMA_AM, NO_AM
             FROM [SFI_DWH].[dbo].[DEALER_MOKAS]
-            WHERE TANGGAL_LAHIR IS NOT NULL AND NAMA_PEMILIK IS NOT NULL
+            WHERE TANGGAL_LAHIR IS NOT NULL AND NAMA_MITRA IS NOT NULL
         """
         cursor.execute(query)
 
