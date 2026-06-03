@@ -107,7 +107,25 @@ def get_mokas_birthdays_whatsapp() -> bool:
         except Exception as e:
             logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO GM: {e}")
 
-        # 3. Area Manager
+        # 3. Head Sales & Marketing
+        logger.info("[WHATSAPP] PREPARING TO SEND TO HEAD SALES & MARKETING")
+        head_check = check_today_birthday(sorted_rows, columns, today)
+        head_msg = format_mokas_whatsapp_body(
+            "Alfian Tejo Mukti",
+            "Head Sales & Marketing",
+            sorted_rows,
+            columns,
+            head_check,
+            today_date_str,
+        )
+        try:
+            send_paste_report("081287398119", head_msg)
+        except Exception as e:
+            logger.error(
+                f"[ERROR] WHATSAPP FAILED TO SEND TO HEAD SALES & MARKETING: {e}"
+            )
+
+        # 4. Area Manager
         for (no_am, nama_am, map_area), rows_am in am_grouped.items():
             logger.info(f"[WHATSAPP] PREPARING TO SEND TO AM {nama_am} ({map_area})")
             am_check = check_today_birthday(rows_am, columns, today)
@@ -119,7 +137,7 @@ def get_mokas_birthdays_whatsapp() -> bool:
             except Exception as e:
                 logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO AM {nama_am}: {e}")
 
-        # 4. Branch Manager
+        # 5. Branch Manager
         for (no_bm, nama_bm, map_cabang), rows_bm in bm_grouped.items():
             logger.info(f"[WHATSAPP] PREPARING TO SEND TO BM {nama_bm} ({map_cabang})")
             bm_check = check_today_birthday(rows_bm, columns, today)
