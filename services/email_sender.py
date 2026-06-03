@@ -1,6 +1,9 @@
 import pyautogui
 import pyperclip
 from typing import List, Optional, Union
+from services.capslock_checker import capslock_checking
+from services.chrome_checker import open_outlook
+from services.sppi_utils import get_email_subject
 
 from general_task import (
     maximize_app_window,
@@ -17,9 +20,6 @@ from services.config import (
     DEFAULT_CC_SPPI,
     DEFAULT_CC_MOKAS,
 )
-from services.capslock_checker import capslock_checking
-from services.chrome_checker import open_outlook
-from services.sppi_utils import get_email_subject
 
 CONFIG = load_config()
 
@@ -79,10 +79,10 @@ def outlook_email_flow(
     blank_mail_space()
     wait_timer(CONFIG["WAIT_TIME"]["ONE_SECOND"])
 
-    # if minimize:
-    #     minimize_outlook()
-    # else:
-    #     finish_outlook()
+    if minimize:
+        minimize_outlook()
+    else:
+        finish_outlook()
 
     return True
 
@@ -141,7 +141,7 @@ def send_mokas_email(
         logger.error("[ERROR] TARGET EMAIL IS EMPTY")
         return False
 
-    logger.info(f"[SYSTEM] START MOKAS EMAIL (TO='{primary_recipients[0]}')")
+    logger.info(f"[SYSTEM] START MOBIL BEKAS EMAIL (TO='{primary_recipients[0]}')")
 
     final_cc_list = normalizing_recipients(DEFAULT_CC_MOKAS)
     if cc_recipients:
@@ -158,7 +158,7 @@ def send_mokas_email(
     )
 
     if success:
-        logger.info("[SYSTEM] MOKAS EMAIL SENT SUCCESSFULLY")
+        logger.info("[SYSTEM] MOBIL BEKAS EMAIL SENT SUCCESSFULLY")
     else:
-        logger.error("[ERROR] MOKAS EMAIL SENDING FAILED")
+        logger.error("[ERROR] MOBIL BEKAS EMAIL SENDING FAILED")
     return success

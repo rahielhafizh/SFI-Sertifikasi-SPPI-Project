@@ -4,8 +4,8 @@ from services.config import load_config, logger, get_month_id
 from services.database_mokas import fetch_dealer_mokas_data
 from services.mokas_utils import filter_mokas_birthdays, sort_by_birth_date
 from services.mokas_formatter import format_mokas_whatsapp_body
-from services.whatsapp_sender import send_whatsapp_report
 from services.sppi_utils import parse_date
+from services.whatsapp_sender import send_paste_report
 
 CONFIG = load_config()
 
@@ -27,7 +27,7 @@ def get_mokas_birthdays_whatsapp() -> bool:
         return False
 
     try:
-        logger.info("[SYSTEM] FETCHING DEALER MOKAS DATA FOR WHATSAPP NOTIFICATION")
+        logger.info("[SYSTEM] FETCHING DEALER MOBIL BEKAS DATA FOR WHATSAPP REMINDER")
         columns, rows = fetch_dealer_mokas_data(conn)
 
         if not columns or rows is None:
@@ -42,7 +42,7 @@ def get_mokas_birthdays_whatsapp() -> bool:
         logger.info(f"[SYSTEM] FILTERED {len(filtered_rows)} DAILY ROWS FOR WHATSAPP")
 
         if not filtered_rows:
-            logger.info("[SYSTEM] NO MOKAS BIRTHDAYS FOUND FOR TODAY OR UPCOMING DAYS")
+            logger.info("[SYSTEM] NO BIRTHDAYS FOUND FOR TODAY OR UPCOMING DAYS")
             return True
 
         sorted_rows = sort_by_birth_date(columns, filtered_rows)
@@ -80,27 +80,22 @@ def get_mokas_birthdays_whatsapp() -> bool:
                     bm_grouped[bm_key] = []
                 bm_grouped[bm_key].append(row)
 
-        # COO
+        # 1. COO
         logger.info("[WHATSAPP] PREPARING TO SEND TO COO")
         coo_check = check_today_birthday(sorted_rows, columns, today)
         coo_msg = format_mokas_whatsapp_body(
-            "'Herberth Simbolon'",
-            "COO",
-            sorted_rows,
-            columns,
-            coo_check,
-            today_date_str,
+            "Herberth Simbolon", "COO", sorted_rows, columns, coo_check, today_date_str
         )
         try:
-            send_whatsapp_report("082311919875", coo_msg)
+            send_paste_report("082311919875", coo_msg)
         except Exception as e:
             logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO COO: {e}")
 
-        # GM Sales & Marketing
+        # 2. GM Sales & Marketing
         logger.info("[WHATSAPP] PREPARING TO SEND TO GM")
         gm_check = check_today_birthday(sorted_rows, columns, today)
         gm_msg = format_mokas_whatsapp_body(
-            "'Brian Yekti Budi'",
+            "Brian Yekti Budi",
             "GM Sales & Marketing",
             sorted_rows,
             columns,
@@ -108,36 +103,31 @@ def get_mokas_birthdays_whatsapp() -> bool:
             today_date_str,
         )
         try:
-            send_whatsapp_report("08128558052", gm_msg)
+            send_paste_report("08128558052", gm_msg)
         except Exception as e:
             logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO GM: {e}")
 
-        # Area Manager
+        # 3. Area Manager
         for (no_am, nama_am, map_area), rows_am in am_grouped.items():
-            logger.info(f"[WHATSAPP] PREPARING TO SEND TO {nama_am} ({map_area})")
+            logger.info(f"[WHATSAPP] PREPARING TO SEND TO AM {nama_am} ({map_area})")
             am_check = check_today_birthday(rows_am, columns, today)
             am_msg = format_mokas_whatsapp_body(
-                nama_am, f"Area {map_area}", rows_am, columns, am_check, today_date_str
+                nama_am, f"AM {map_area}", rows_am, columns, am_check, today_date_str
             )
             try:
-                send_whatsapp_report(no_am, am_msg)
+                send_paste_report(no_am, am_msg)
             except Exception as e:
                 logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO AM {nama_am}: {e}")
 
-        # Branch Manager
+        # 4. Branch Manager
         for (no_bm, nama_bm, map_cabang), rows_bm in bm_grouped.items():
-            logger.info(f"[WHATSAPP] PREPARING TO SEND TO {nama_bm} ({map_cabang})")
+            logger.info(f"[WHATSAPP] PREPARING TO SEND TO BM {nama_bm} ({map_cabang})")
             bm_check = check_today_birthday(rows_bm, columns, today)
             bm_msg = format_mokas_whatsapp_body(
-                nama_bm,
-                f"Cabang {map_cabang}",
-                rows_bm,
-                columns,
-                bm_check,
-                today_date_str,
+                nama_bm, f"BM {map_cabang}", rows_bm, columns, bm_check, today_date_str
             )
             try:
-                send_whatsapp_report(no_bm, bm_msg)
+                send_paste_report(no_bm, bm_msg)
             except Exception as e:
                 logger.error(f"[ERROR] WHATSAPP FAILED TO SEND TO BM {nama_bm}: {e}")
 
@@ -145,7 +135,7 @@ def get_mokas_birthdays_whatsapp() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"[ERROR] DAILY MOKAS WHATSAPP PROCESS CRITICAL FAILURE : {e}")
+        logger.error(f"[ERROR] WHATSAPP PROCESS CRITICAL FAILURE : {e}")
         return False
     finally:
         conn.close()

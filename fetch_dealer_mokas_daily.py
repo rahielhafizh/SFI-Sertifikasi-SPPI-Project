@@ -18,7 +18,7 @@ def get_mokas_birthdays_daily(minimize_after_send: bool = True) -> bool:
         return False
 
     try:
-        logger.info("[SYSTEM] FETCHING DEALER MOKAS DATA FROM DATABASE")
+        logger.info("[SYSTEM] FETCHING DEALER MOBIL BEKAS DATA FROM DATABASE")
         columns, rows = fetch_dealer_mokas_data(conn)
 
         if not columns or rows is None:
@@ -33,7 +33,7 @@ def get_mokas_birthdays_daily(minimize_after_send: bool = True) -> bool:
         logger.info(f"[SYSTEM] FILTERED {len(filtered_rows)} DAILY ROWS")
 
         if not filtered_rows:
-            logger.info("[SYSTEM] NO MOKAS BIRTHDAYS FOUND FOR TODAY OR UPCOMING DAYS")
+            logger.info("[SYSTEM] NO PIC BIRTHDAYS FOUND FOR TODAY OR UPCOMING DAYS")
             return True
 
         sorted_rows = sort_by_birth_date(columns, filtered_rows)
@@ -71,7 +71,7 @@ def get_mokas_birthdays_daily(minimize_after_send: bool = True) -> bool:
             sorted_rows, columns, check_today_birthdays, today_date_str
         )
         subject = (
-            f"Pemberitahuan Ulang Tahun Pemilik Dealer Mokas Harian ({period_value})"
+            f"Pemberitahuan Ulang Tahun Mitra Dealer Mobil Bekas Harian ({period_value})"
         )
 
         success = send_mokas_email(
@@ -79,14 +79,14 @@ def get_mokas_birthdays_daily(minimize_after_send: bool = True) -> bool:
         )
 
         if success:
-            logger.info("[SYSTEM] DAILY MOKAS EMAIL SENT SUCCESSFULLY")
+            logger.info("[SYSTEM] DAILY MOBIL BEKAS EMAIL SENT SUCCESSFULLY")
         else:
-            logger.error("[ERROR] FAILED TO SEND DAILY MOKAS EMAIL")
+            logger.error("[ERROR] FAILED TO SEND DAILY MOBIL BEKAS EMAIL")
 
         return success
 
     except Exception as e:
-        logger.error(f"[ERROR] DAILY MOKAS PROCESS FAILED : {e}")
+        logger.error(f"[ERROR] DAILY MOBIL BEKAS PROCESS FAILED : {e}")
         return False
     finally:
         conn.close()

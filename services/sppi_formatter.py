@@ -13,7 +13,7 @@ def format_internal_email_body(
     col_idx = {col: idx for idx, col in enumerate(columns)}
     lines = build_email_header(branch_name, branch_manager)
     lines.extend(
-        ["Berikut kami lampirkan daftar Person in Charge (PIC) Internal terkait :", ""]
+        ["Dengan ini kami lampirkan daftar Person in Charge (PIC) Internal terkait :", ""]
     )
 
     for pic in pic_list:
@@ -36,7 +36,7 @@ def format_external_email_body(
     col_idx = {col: idx for idx, col in enumerate(columns)}
     lines = build_email_header(branch_name, branch_manager)
     lines.extend(
-        ["Berikut kami lampirkan daftar Person in Charge (PIC) Eksternal terkait:", ""]
+        ["Dengan ini kami lampirkan daftar Person in Charge (PIC) Eksternal terkait:", ""]
     )
 
     for pic in pic_list:

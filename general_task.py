@@ -7,6 +7,12 @@ CONFIG = load_config()
 keyboard = Controller()
 
 
+def action_paste():
+    wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
+    pyautogui.hotkey("ctrl", "v")
+    wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
+
+
 def adjust_picture_size():
     wait_timer(CONFIG["WAIT_TIME"]["HALF_SECOND"])
     logger.info("[SYSTEM] ADJUST IMAGE WIDTH VIA ALT MENU")

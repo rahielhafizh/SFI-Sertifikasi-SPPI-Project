@@ -26,5 +26,5 @@ def fetch_dealer_mokas_data(
         logger.info(f"[DATABASE] FETCHED {len(rows)} ROWS FROM DEALER_MOKAS")
         return columns, rows
     except pyodbc.Error as e:
-        logger.error(f"[ERROR] QUERY FAILED (DEALER MOKAS) : {e}")
+        logger.error(f"[ERROR] QUERY FAILED (DEALER MOBIL BEKAS) : {e}")
         return None, None

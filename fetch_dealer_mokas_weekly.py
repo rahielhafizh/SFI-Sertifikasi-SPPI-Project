@@ -17,13 +17,11 @@ def get_mokas_birthdays_weekly(minimize_after_send: bool = True) -> bool:
         return False
 
     try:
-        logger.info("[SYSTEM] FETCHING DEALER MOKAS DATA FROM DATABASE")
+        logger.info("[SYSTEM] FETCHING DEALER MOBIL BEKAS DATA FROM DATABASE")
         result = fetch_dealer_mokas_data(conn)
 
         if not isinstance(result, tuple) or len(result) != 2:
-            logger.error(
-                "[ERROR] UNEXPECTED RETURN FORMAT FROM fetch_dealer_mokas_data"
-            )
+            logger.error("[ERROR] UNEXPECTED RETURN FORMAT")
             return False
 
         columns, rows = result
@@ -40,7 +38,7 @@ def get_mokas_birthdays_weekly(minimize_after_send: bool = True) -> bool:
         logger.info(f"[SYSTEM] FILTERED {len(filtered_rows)} WEEKLY ROWS")
 
         if not filtered_rows:
-            logger.info("[SYSTEM] NO MOKAS BIRTHDAYS FOUND FOR THIS WEEK")
+            logger.info("[SYSTEM] NO PIC BIRTHDAYS FOUND FOR THIS WEEK")
             return True
 
         sorted_rows = sort_by_birth_date(columns, filtered_rows)
@@ -53,21 +51,21 @@ def get_mokas_birthdays_weekly(minimize_after_send: bool = True) -> bool:
         end_str = f"{end_date.day} {get_month_id(end_date.strftime('%B'), 'title')} {end_date.year}"
         period_value = f"{start_str} - {end_str}"
         email_body = format_mokas_weekly_email_body(period_value, sorted_rows, columns)
-        subject = f"Pemberitahuan Ulang Tahun Pemilik Dealer Mokas ({period_value})"
+        subject = f"Pemberitahuan Ulang Tahun Mitra Dealer Mobil Bekas ({period_value})"
 
         success = send_mokas_email(
             TARGET_EMAIL, subject, email_body, minimize_after_send=minimize_after_send
         )
 
         if success:
-            logger.info("[SYSTEM] WEEKLY MOKAS EMAIL SENT SUCCESSFULLY")
+            logger.info("[SYSTEM] WEEKLY MOBIL BEKAS EMAIL SENT SUCCESSFULLY")
         else:
-            logger.error("[ERROR] FAILED TO SEND WEEKLY MOKAS EMAIL")
+            logger.error("[ERROR] FAILED TO SEND WEEKLY MOBIL BEKAS EMAIL")
 
         return success
 
     except Exception as e:
-        logger.error(f"[ERROR] WEEKLY MOKAS PROCESS FAILED : {e}")
+        logger.error(f"[ERROR] WEEKLY MOBIL BEKAS PROCESS FAILED : {e}")
         return False
     finally:
         conn.close()

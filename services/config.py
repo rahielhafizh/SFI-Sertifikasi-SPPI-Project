@@ -101,14 +101,23 @@ logger = setup_logger()
 
 DEFAULT_CC_SPPI = [
     "agnes.tri@sfi.co.id",
-    "swacita.apriyanti@sfi.co.id",
     "ardi.supriyono@sfi.co.id",
+    "swacita.apriyanti@sfi.co.id",
+    "rio.maulana@sfi.co.id",
+    "hermawan.nugroho@sfi.co.id",
+    "ugi.lugina@sfi.co.id",
 ]
 
 
-DEFAULT_CC_MOKAS = ["brian.yektibudi@sfi.co.id"]
+DEFAULT_CC_MOKAS = [
+    "angelita.roma@sfi.co.id",
+    "alfian.tejo@sfi.co.id",
+    "aris.sumartono@sfi.co.id",
+    "brian.yektibudi@sfi.co.id",
+]
 
 APPLICATION_PATHS = {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "OUTLOOK_PATH": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office\\Outlook 2013.lnk",
 }
 
@@ -116,9 +125,11 @@ WAIT_TIMES = {
     "TENTH_SECOND": 0.1,
     "HALF_SECOND": 0.5,
     "ONE_SECOND": 1.0,
+    "TWO_SECOND": 2.0,
     "THREE_SECOND": 3.0,
     "FIVE_SECOND": 5.0,
     "TEN_SECOND": 10.0,
+    "TWENTY_SECOND": 20.0,
 }
 
 MONTHS_ID = {
@@ -239,9 +250,7 @@ def get_certification_filter_config(preset: Optional[str] = None) -> Dict[str, A
         logger.info(f"[CONFIG] USING CERTIFICATION FILTER PRESET : {active_preset}")
         return CERTIFICATION_FILTER_PRESETS[active_preset].copy()
 
-    logger.warning(
-        f"[CONFIG] UNKNOWN PRESET '{active_preset}', DEFAULTING TO 'NEXT_MONTH'"
-    )
+    logger.warning(f"[CONFIG] UNKNOWN PRESET '{active_preset}'")
     return CERTIFICATION_FILTER_PRESETS["NEXT_MONTH"].copy()
 
 

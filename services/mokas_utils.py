@@ -16,7 +16,6 @@ def filter_mokas_birthdays(
     dealer_id_idx = column_indices.get("DEALER_MOKAS_ID", -1)
     birth_date_idx = column_indices.get("TANGGAL_LAHIR", -1)
     owner_name_idx = column_indices.get("NAMA_PEMILIK", -1)
-
     filtered_data = []
     seen_ids = set()
 

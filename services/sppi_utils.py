@@ -133,7 +133,7 @@ def build_email_footer() -> List[str]:
         "",
         "Hormat kami,",
         "Asset Management Division.",
-        "Collection HO  PT Suzuki Finance Indonesia.",
+        "Collection HO - PT Suzuki Finance Indonesia.",
     ]
 
 
